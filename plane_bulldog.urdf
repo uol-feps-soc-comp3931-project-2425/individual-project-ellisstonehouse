@@ -11,9 +11,9 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <visual>
-      <origin rpy="0 0 0" xyz="0.5 2.5 0"/> <!-- Center of the home_start area -->
+      <origin rpy="0 0 0" xyz="1.5 7.5 0"/> <!-- Center of the home_start area -->
       <geometry>
-        <box size="2 6 0"/> <!-- Size of the home_start area -->
+        <box size="2 14 0"/> <!-- Size of the home_start area -->
       </geometry>
       <material name="red">
         <color rgba="1 0 0 1"/> <!-- Red color -->
@@ -30,9 +30,9 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <visual>
-      <origin rpy="0 0 0" xyz="10.5 2.5 0"/> <!-- Center of the home_finish area -->
+      <origin rpy="0 0 0" xyz="13.5 7.5 0"/> <!-- Center of the home_finish area -->
       <geometry>
-        <box size="2 6 0"/> <!-- Size of the home_finish area -->
+        <box size="2 14 0"/> <!-- Size of the home_finish area -->
       </geometry>
       <material name="green">
         <color rgba="0 1 0 1"/> <!-- Green color -->
@@ -49,15 +49,15 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <collision>
-      <origin rpy="0 0 0" xyz="5.5 6 0.5"/>
+      <origin rpy="0 0 0" xyz="7.5 15 0.5"/>
       <geometry>
-        <box size="14 1 1"/>
+        <box size="16 1 1"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="5.5 6 0.5"/>
+      <origin rpy="0 0 0" xyz="7.5 15 0.5"/>
       <geometry>
-        <box size="14 1 1"/>
+        <box size="16 1 1"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -72,15 +72,15 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <collision>
-      <origin rpy="0 0 0" xyz="5.5 -1 0.5"/>
+      <origin rpy="0 0 0" xyz="7.5 0 0.5"/>
       <geometry>
-        <box size="14 1 1"/>
+        <box size="16 1 1"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="5.5 -1 0.5"/>
+      <origin rpy="0 0 0" xyz="7.5 0 0.5"/>
       <geometry>
-        <box size="14 1 1"/>
+        <box size="16 1 1"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -95,15 +95,15 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <collision>
-      <origin rpy="0 0 0" xyz="-1 2.5 0.5"/>
+      <origin rpy="0 0 0" xyz="0 7.5 0.5"/>
       <geometry>
-        <box size="1 6 1"/>
+        <box size="1 16 1"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="-1 2.5 0.5"/>
+      <origin rpy="0 0 0" xyz="0 7.5 0.5"/>
       <geometry>
-        <box size="1 6 1"/>
+        <box size="1 16 1"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -118,15 +118,15 @@
        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
     <collision>
-      <origin rpy="0 0 0" xyz="12 2.5 0.5"/>
+      <origin rpy="0 0 0" xyz="15 7.5 0.5"/>
       <geometry>
-        <box size="1 6 1"/>
+        <box size="1 16 1"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="12 2.5 0.5"/>
+      <origin rpy="0 0 0" xyz="15 7.5 0.5"/>
       <geometry>
-        <box size="1 6 1"/>
+        <box size="1 16 1"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>

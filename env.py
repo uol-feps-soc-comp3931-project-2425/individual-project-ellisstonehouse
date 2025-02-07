@@ -7,29 +7,33 @@ import random
 
 class PredPreyEnv():
 
-    def __init__(self, num_predators=1, num_prey=1, GUI=False):
+    def __init__(self, arena_shape=(16, 16), num_predators=1, num_prey=1, GUI=False):
 
+        # Arena configuration
+        self.arena_shape = arena_shape
+        self.w, self.h = arena_shape
 
-        self.home_start = [[x, y] for x in range(0, 2) for y in range(0, 6)]
-        self.home_finish = [[x, y] for x in range(10, 12) for y in range(0, 6)]
-
-        self.barriers = [[x, y] for x in range(-1, 13) for y in range(-1, 7) if x == -1 or x == 12 or y == -1 or y == 6]
+        self.home_start = np.array([(x, y) for x in range(1, 3) for y in range(1, self.h-1)])
+        self.home_finish = np.array([(x, y) for x in range(self.w-3, self.w-1) for y in range(1, self.h-1)])
 
         
         # Connect to PyBullet
         if GUI:
-            self.physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
+            self.physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
         else:
             self.physicsClient = p.connect(p.DIRECT)
         
         #p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-        p.resetDebugVisualizerCamera(cameraDistance=6, cameraYaw=0, cameraPitch=-89, cameraTargetPosition = (6, 2, 6))
+        p.resetDebugVisualizerCamera(cameraDistance=6, cameraYaw=0, cameraPitch=-89, cameraTargetPosition = (self.w/2, self.h/2, self.w/2))
 
         p.setGravity(0,0,0)
 
         # Agent configuration
+        self.starting_num_predators = num_predators
+        self.starting_num_prey = num_prey
+
         self.num_predators = num_predators
         self.num_prey = num_prey
 
@@ -47,10 +51,6 @@ class PredPreyEnv():
         self.reward_caught = -100
         self.reward_time_penalty = -1
 
-        self.observation_space = []
-
-        self.reset()
-
 
 
     
@@ -60,103 +60,97 @@ class PredPreyEnv():
         p.loadURDF("plane_bulldog.urdf", [0, 0, 0], useFixedBase=True)
 
         
-    def get_obs(self):
+    
+    def _get_state(self):
+        # Return the positions of all agents as the state
 
-        obs = []
+        # print ("get state", self.predator_positions)
+        # print ("now np ", np.array(self.predator_positions))
 
-        # for each predator adds its coords, then concatenates on all prey coords
-        for pred in self.predator_positions:
-            templist = np.array(pred, dtype=np.float32)  # Ensure it's float32
-            for prey in self.prey_positions:
-                templist = np.concatenate([templist, np.array(prey, dtype=np.float32)])
-
-            obs.append(templist)
-        
-        # for each prey adds its coords, then concatenates on all predator coords
-        for prey in self.prey_positions:
-            templist = np.array(prey, dtype=np.float32)  # Ensure it's float32
-            for pred in self.predator_positions:
-                templist = np.concatenate([templist, np.array(pred, dtype=np.float32)])
-            obs.append(templist)
-        
-        return obs
-
+        state = {
+            "predator": np.array(self.predator_positions),
+            "prey": np.array(self.prey_positions),
+        }
+        return state
 
     def calculate_rewards(self):
 
-        rewards = np.zeros(self.num_predators + self.num_prey, dtype=np.float32)
+        predator_rewards = 0
+        prey_rewards = 0
 
-        # Rewards for Predators
-        for i, predator_pos in enumerate(self.predator_positions):
-            reward = -0.5  # Time penalty to encourage faster hunting
+        # Check if predator catches prey
+        for predator_pos in self.predator_positions:
 
             for prey_pos in self.prey_positions:
-                distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
-                if distance < 1.0:  # Catch condition
-                    reward += 100.0
-                else:
-                    reward += 1.0 / distance
-
-            # for barrier_pos in self.barriers:
-            #     if np.linalg.norm(np.array(predator_pos) - np.array(barrier_pos)) < 1.0:
-            #         reward -= 1.0
-            #         break
-
-            rewards[i] = reward  # Assign reward to predator
-
-        # Rewards for Prey
-        for i, prey_pos in enumerate(self.prey_positions):
-            reward = 0.5
-
-            # Reward for reaching home
-            for home_pos in self.home_finish:
-                if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:
-                    reward += 100.0
-                    break
-
-            # Penalty for getting caught
-            for predator_pos in self.predator_positions:
-                distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
-                if distance < 1.0:  # Catch condition
-                    reward -= 100.0
-                else:
-                    reward -= 1.0 / distance
-
-            # for barrier_pos in self.barriers:
-            #     if np.linalg.norm(np.array(prey_pos) - np.array(barrier_pos)) < 1.0:
-            #         reward -= 1.0
-            #         break
+                if np.linalg.norm(prey_pos - predator_pos) < 1.0:  # Catch condition
+                    predator_rewards += 10
             
-            rewards[self.num_predators + i] = reward
+            predator_rewards -= 0.01
 
-        return rewards  # Return as numpy array
+
+            # ADD IN A DEDUCTION USING THE TOTAL ELPASED TIME TO URGE PRED TO CATCH FASTER
+
+        
+        # Check if prey is caught by any predator or is home
+        for prey_pos in self.prey_positions:
+
+            for home_pos in self.home_finish:
+                if np.linalg.norm(prey_pos - home_pos) < 1.0:  # Home base condition
+                    prey_rewards += 10
+                    break
+            
+            for predator_pos in self.predator_positions:
+                if np.linalg.norm(prey_pos - predator_pos) < 1.0:  # Catch condition
+                    prey_rewards -= 10
+            
+            for home_pos in self.home_start:
+                if np.linalg.norm(prey_pos - home_pos) < 1.0:  # Home base condition
+                    prey_rewards -= 0.1
+                    break
+            
+            prey_rewards += 0.01
+            
+
+        rewards = {
+            "predator": np.array(predator_rewards),
+            "prey": np.array(prey_rewards),
+        }
+
+        return rewards
 
 
     def done(self):
 
-        dones = [False]*(self.num_predators + self.num_prey)
+        prey_caught = 0
 
-        # Check if predator catches a prey
-        for idx, predator_pos in enumerate(self.predator_positions):
-            for prey_pos in self.prey_positions:
-                if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
-                    dones[idx] = True
-                    break
-
-        # Check if prey is caught
-        for idx, prey_pos in enumerate(self.prey_positions):
+        # Check if predator catches all prey
+        for prey_pos in self.prey_positions:
             for predator_pos in self.predator_positions:
-                if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
-                    dones[self.num_predators + idx] = True
-                    break
+                if np.linalg.norm(prey_pos - predator_pos) < 1.0:  # Catch condition
+                    prey_caught += 1
+                break
+            
+        if prey_caught == self.num_prey:
+            return True
         
-            # Check if prey is home
+
+        prey_home = 0
+
+        # Check if predator catches all prey
+        for prey_pos in self.prey_positions:
             for home_pos in self.home_finish:
-                if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:  # Home base condition
-                    dones[self.num_predators + idx] = True
+                if np.linalg.norm(prey_pos - home_pos) < 1.0:  # Home base condition
+                    prey_home += 1
                     break
 
-        return dones
+            
+        if prey_home == self.num_prey:
+            return True
+        
+
+        return False
+
+
 
 
     def change_velocity(self, agent, velocity):
@@ -175,25 +169,39 @@ class PredPreyEnv():
         p.resetBaseVelocity(agent, linVel, angVel)
 
     
-    def step(self, actions):
+    def step(self, predator_actions, prey_actions):
+        # # Define moves
+        # moves = np.array([
+        #     [0, 1],   # Up
+        #     [0, -1],  # Down
+        #     [-1, 0],  # Left
+        #     [1, 0],   # Right
+        #     [-1, 1],  # Up-Left
+        #     [1, 1],   # Up-Right
+        #     [-1, -1], # Down-Left
+        #     [1, -1],  # Down-Right
+        # ])
+
 
         # Apply actions to predators
         for i in range(self.num_predators):
-            self.change_velocity(self.predator_ids[i], actions[i])
-            self.predator_positions[i] = p.getBasePositionAndOrientation(self.predator_ids[i])[0][0:2]
+            self.change_velocity(self.predator_ids[i], predator_actions[0])
+            self.predator_positions[i] = np.array(p.getBasePositionAndOrientation(self.predator_ids[i])[0][0:2])
 
         # Apply actions to prey
         for i in range(self.num_prey):
-            self.change_velocity(self.prey_ids[i], actions[i + self.num_predators])
-            self.prey_positions[i] = p.getBasePositionAndOrientation(self.prey_ids[i])[0][0:2]
+            self.change_velocity(self.prey_ids[i], prey_actions[0])
+            self.prey_positions[i] = np.array(p.getBasePositionAndOrientation(self.prey_ids[i])[0][0:2])
+
 
         # Advance simulation
         p.stepSimulation()
+        time.sleep(1 / 240)
 
-        return self.get_obs(), self.calculate_rewards(), self.done()
 
-    def render(self):
-        pass
+        return self._get_state(), self.calculate_rewards(), self.done()
+
+
         
 
     def reset(self):
@@ -209,36 +217,26 @@ class PredPreyEnv():
 
         sphereOrientation = p.getQuaternionFromEuler([0, 0, 0])
 
-        for _ in range(self.num_predators):
-            predator_pos = [5.5, 2.5]
+        for _ in range(self.starting_num_predators):
+            predator_pos = np.array([self.w/2, self.h/2], dtype=np.int32)
             predator_id = p.loadURDF("sphere2red.urdf", [predator_pos[0], predator_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
-            
-            # Disable collisions with other objects
-            p.setCollisionFilterGroupMask(predator_id, -1, collisionFilterGroup=1, collisionFilterMask=0)
-
+            p.changeVisualShape(predator_id, -1, rgbaColor=[1, 0, 0, 1])
             self.predator_ids.append(predator_id)
             self.predator_positions.append(predator_pos)
 
-
-        # for prey_pos in [[0, 1], [0, 4]]:
-        for _ in range(self.num_prey):
-            prey_pos = random.choice(self.home_start)
-
+        for _ in range(self.starting_num_prey):
+            prey_pos = random.choice(self.home_start).flatten()
             prey_id = p.loadURDF("sphere2red.urdf", [prey_pos[0], prey_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
             p.changeVisualShape(prey_id, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
-
-            # Disable collisions with other objects
-            p.setCollisionFilterGroupMask(prey_id, -1, collisionFilterGroup=2, collisionFilterMask=0)
-
             self.prey_ids.append(prey_id)
             self.prey_positions.append(prey_pos)
 
 
-        self.predator_positions = np.array(self.predator_positions, dtype=np.float32)
-        self.prey_positions = np.array(self.prey_positions, dtype=np.float32)
+        # # Create prey and predator objects in PyBullet
+        # self.prey_id = p.loadURDF("sphere2red.urdf", [self.prey_position[0], self.prey_position[1], 0.5])
+        # self.predator_id = p.loadURDF("sphere2red.urdf", [self.predator_position[0], self.predator_position[1], 0.5])
 
-
-        return self.get_obs()
+        return self._get_state()
 
     def close(self):
         p.disconnect()
