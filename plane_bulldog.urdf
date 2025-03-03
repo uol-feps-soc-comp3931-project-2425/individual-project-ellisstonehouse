@@ -1,0 +1,175 @@
+<?xml version="0.0" ?>
+<robot name="colored_areas">
+  <!-- Define the world link -->
+  <link name="world"/>
+
+  <!-- Add home_start area (red) -->
+  <link name="home_start_area">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="1.5 7.5 0"/> <!-- Center of the home_start area -->
+      <geometry>
+        <box size="2 14 0"/> <!-- Size of the home_start area -->
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/> <!-- Red color -->
+      </material>
+    </visual>
+    <!-- No collision element -->
+  </link>
+
+  <!-- Add home_finish area (green) -->
+  <link name="home_finish_area">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="13.5 7.5 0"/> <!-- Center of the home_finish area -->
+      <geometry>
+        <box size="2 14 0"/> <!-- Size of the home_finish area -->
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 1"/> <!-- Green color -->
+      </material>
+    </visual>
+    <!-- No collision element -->
+  </link>
+
+  <!-- Define barrier walls -->
+  <link name="barrier_top">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="7.5 15 0.5"/>
+      <geometry>
+        <box size="16 1 1"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="7.5 15 0.5"/>
+      <geometry>
+        <box size="16 1 1"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <link name="barrier_bottom">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="7.5 0 0.5"/>
+      <geometry>
+        <box size="16 1 1"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="7.5 0 0.5"/>
+      <geometry>
+        <box size="16 1 1"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <link name="barrier_left">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 7.5 0.5"/>
+      <geometry>
+        <box size="1 16 1"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 7.5 0.5"/>
+      <geometry>
+        <box size="1 16 1"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <link name="barrier_right">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="15 7.5 0.5"/>
+      <geometry>
+        <box size="1 16 1"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="15 7.5 0.5"/>
+      <geometry>
+        <box size="1 16 1"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Connect colored areas to the world -->
+  <joint name="home_start_joint" type="fixed">
+    <parent link="world"/> <!-- Attach to the world -->
+    <child link="home_start_area"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <joint name="home_finish_joint" type="fixed">
+    <parent link="world"/> <!-- Attach to the world -->
+    <child link="home_finish_area"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <joint name="barrier_top_joint" type="fixed">
+    <parent link="world"/>
+    <child link="barrier_top"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <joint name="barrier_bottom_joint" type="fixed">
+    <parent link="world"/>
+    <child link="barrier_bottom"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <joint name="barrier_left_joint" type="fixed">
+    <parent link="world"/>
+    <child link="barrier_left"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <joint name="barrier_right_joint" type="fixed">
+    <parent link="world"/>
+    <child link="barrier_right"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+
+</robot>
