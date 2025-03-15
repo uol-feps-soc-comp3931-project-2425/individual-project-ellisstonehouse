@@ -7,19 +7,13 @@ import random
 
 class PredPreyEnv():
 
-    def __init__(self, arena_shape=(16, 16), num_predators=1, num_prey=1, GUI=False):
+    def __init__(self, num_predators=1, num_prey=1, GUI=False):
 
-        # Arena configuration
-        self.arena_shape = arena_shape
-        self.w, self.h = arena_shape
 
-        self.home_start = [[x, y] for x in range(1, 3) for y in range(1, self.h-1)]
-        self.home_finish = [[x, y] for x in range(self.w-3, self.w-1) for y in range(1, self.h-1)]
+        self.home_start = [[x, y] for x in range(0, 2) for y in range(0, 6)]
+        self.home_finish = [[x, y] for x in range(10, 12) for y in range(0, 6)]
 
-        # self.home_start = [[x, y] for x in range(1, 2) for y in range(1, 2)]
-        # self.home_finish = [[x, y] for x in range(self.w-2, self.w-1) for y in range(self.h-2, self.h-1)]
-
-        self.barriers = [[x, y] for x in range(0, self.w) for y in range(0, self.h) if x == 0 or x == self.w-1 or y == 0 or y == self.h-1]
+        self.barriers = [[x, y] for x in range(-1, 13) for y in range(-1, 7) if x == -1 or x == 12 or y == -1 or y == 6]
 
         
         # Connect to PyBullet
@@ -31,7 +25,7 @@ class PredPreyEnv():
         #p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-        p.resetDebugVisualizerCamera(cameraDistance=6, cameraYaw=0, cameraPitch=-89, cameraTargetPosition = (self.w/2, self.h/2, self.w/2))
+        p.resetDebugVisualizerCamera(cameraDistance=6, cameraYaw=0, cameraPitch=-89, cameraTargetPosition = (6, 2, 6))
 
         p.setGravity(0,0,0)
 
@@ -94,7 +88,7 @@ class PredPreyEnv():
 
         # Rewards for Predators
         for i, predator_pos in enumerate(self.predator_positions):
-            reward = -0.1  # Time penalty to encourage faster hunting
+            reward = -0.5  # Time penalty to encourage faster hunting
 
             for prey_pos in self.prey_positions:
                 distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
@@ -103,16 +97,16 @@ class PredPreyEnv():
                 else:
                     reward += 1.0 / distance
 
-            for barrier_pos in self.barriers:
-                if np.linalg.norm(np.array(predator_pos) - np.array(barrier_pos)) < 1.0:
-                    reward -= 1.0
-                    break
+            # for barrier_pos in self.barriers:
+            #     if np.linalg.norm(np.array(predator_pos) - np.array(barrier_pos)) < 1.0:
+            #         reward -= 1.0
+            #         break
 
             rewards[i] = reward  # Assign reward to predator
 
         # Rewards for Prey
         for i, prey_pos in enumerate(self.prey_positions):
-            reward = 0.1
+            reward = 0.5
 
             # Reward for reaching home
             for home_pos in self.home_finish:
@@ -125,13 +119,13 @@ class PredPreyEnv():
                 distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
                 if distance < 1.0:  # Catch condition
                     reward -= 100.0
-                # else:
-                #     reward += distance
+                else:
+                    reward -= 1.0 / distance
 
-            for barrier_pos in self.barriers:
-                if np.linalg.norm(np.array(prey_pos) - np.array(barrier_pos)) < 1.0:
-                    reward -= 1.0
-                    break
+            # for barrier_pos in self.barriers:
+            #     if np.linalg.norm(np.array(prey_pos) - np.array(barrier_pos)) < 1.0:
+            #         reward -= 1.0
+            #         break
             
             rewards[self.num_predators + i] = reward
 
@@ -216,9 +210,8 @@ class PredPreyEnv():
         sphereOrientation = p.getQuaternionFromEuler([0, 0, 0])
 
         for _ in range(self.num_predators):
-            predator_pos = [self.w/2, self.h/2]
+            predator_pos = [5.5, 2.5]
             predator_id = p.loadURDF("sphere2red.urdf", [predator_pos[0], predator_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
-            p.changeVisualShape(predator_id, -1, rgbaColor=[1, 0, 0, 1])
             
             # Disable collisions with other objects
             p.setCollisionFilterGroupMask(predator_id, -1, collisionFilterGroup=1, collisionFilterMask=0)
@@ -226,8 +219,11 @@ class PredPreyEnv():
             self.predator_ids.append(predator_id)
             self.predator_positions.append(predator_pos)
 
+
+        # for prey_pos in [[0, 1], [0, 4]]:
         for _ in range(self.num_prey):
             prey_pos = random.choice(self.home_start)
+
             prey_id = p.loadURDF("sphere2red.urdf", [prey_pos[0], prey_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
             p.changeVisualShape(prey_id, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
 
@@ -236,6 +232,7 @@ class PredPreyEnv():
 
             self.prey_ids.append(prey_id)
             self.prey_positions.append(prey_pos)
+
 
         self.predator_positions = np.array(self.predator_positions, dtype=np.float32)
         self.prey_positions = np.array(self.prey_positions, dtype=np.float32)

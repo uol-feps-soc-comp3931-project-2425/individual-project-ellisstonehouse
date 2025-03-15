@@ -15,9 +15,9 @@ if __name__ == '__main__':
 
     evaluate = True
 
-    scenario = 'simple_adversary'
+    scenario = 'test1'
     
-    env = PredPreyEnv(arena_shape=(16, 16), num_predators=1, num_prey=2, GUI=True)
+    env = PredPreyEnv(num_predators=1, num_prey=1, GUI=True)
     env.create_arena()
 
     n_agents = env.num_predators + env.num_prey
@@ -43,11 +43,13 @@ if __name__ == '__main__':
                         n_actions, n_agents, batch_size=1024)
 
     PRINT_INTERVAL = 100
-    N_GAMES = 50000
+    N_GAMES = 10000
     MAX_STEPS = 250
     total_steps = 0
-    score_history = []
-    best_score = 0
+    score_history_pred = []
+    score_history_prey = []
+    best_score_pred = 0
+    best_score_prey = 0
 
     if evaluate:
         maddpg_agents.load_checkpoint()
@@ -64,6 +66,8 @@ if __name__ == '__main__':
                 time.sleep(1 / 2400)
             
             actions = maddpg_agents.choose_action(obs)
+
+            print(actions)
 
 
             obs_, reward, done = env.step(actions)
@@ -89,12 +93,18 @@ if __name__ == '__main__':
         
         # print("Pred:", pred_score, "Prey:", prey_score)
 
-        score_history.append(pred_score + prey_score)
-        avg_score = np.mean(score_history[-100:])
+        score_history_pred.append(pred_score)
+        score_history_prey.append(prey_score)
+        avg_score_pred = np.mean(score_history_pred[-100:])
+        avg_score_prey = np.mean(score_history_prey[-100:])
+
         if not evaluate:
-            if avg_score > best_score:
+            if avg_score_pred > best_score_pred:
                 maddpg_agents.save_checkpoint()
-                best_score = avg_score
+                best_score_pred = avg_score_pred
+            if avg_score_prey > best_score_prey:
+                maddpg_agents.save_checkpoint()
+                best_score_prey = avg_score_prey
         if i % PRINT_INTERVAL == 0 and i > 0:
-            print("Pred:", pred_score, "Prey:", prey_score)
-            print('episode', i, 'average score {:.1f}'.format(avg_score))
+            print("Pred:", avg_score_pred, "Prey:", avg_score_prey)
+            print('episode', i, 'average score {:.1f}'.format((avg_score_pred + avg_score_prey)/n_agents))
