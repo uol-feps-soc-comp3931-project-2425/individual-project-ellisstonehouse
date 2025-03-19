@@ -28,11 +28,8 @@ def run():
 
     actor_dims = []
     n_actions = []
-    for i in range(env.num_predators):
-        actor_dims.append(4 + 4*env.num_prey)
-        n_actions.append(2)
-    for i in range(env.num_prey):
-        actor_dims.append(4 + 4*env.num_predators)
+    for i in range(env.num_predators + env.num_prey):
+        actor_dims.append(5*n_agents)
         n_actions.append(2)
 
     critic_dims = sum(actor_dims) + sum(n_actions)
@@ -48,20 +45,17 @@ def run():
 
     PRINT_INTERVAL = 100
     N_GAMES = 10000
-    MAX_STEPS = 250
+    MAX_STEPS = 500
     total_steps = 0
-    score_history_pred = []
-    score_history_prey = []
-    best_score_pred = 0
-    best_score_prey = 0
+    score_history = []
+    best_score = 0
 
     if eval:
         maddpg_agents.load_checkpoint()
 
     for i in range(N_GAMES):
         obs = env.reset()
-        pred_score = 0
-        prey_score = 0
+        score = 0
         done = [False]*n_agents
         episode_step = 0
 
@@ -72,6 +66,7 @@ def run():
             actions = maddpg_agents.choose_action(obs, evaluate=eval)
 
             obs_, reward, done = env.step(actions)
+
 
             list_actions = list(actions.values())
 
@@ -89,27 +84,22 @@ def run():
 
             obs = obs_
 
-            pred_score += sum(reward[:env.num_predators])
-            prey_score += sum(reward[env.num_prey:])
+            score += sum(reward)
 
             total_steps += 1
             episode_step += 1
 
-        score_history_pred.append(pred_score)
-        score_history_prey.append(prey_score)
-        avg_score_pred = np.mean(score_history_pred[-100:])
-        avg_score_prey = np.mean(score_history_prey[-100:])
+        score_history.append(score)
+        avg_score = np.mean(score_history[-100:])
 
         if not eval:
-            if avg_score_pred > best_score_pred:
+            if avg_score > best_score:
                 maddpg_agents.save_checkpoint()
-                best_score_pred = avg_score_pred
-            if avg_score_prey > best_score_prey:
-                maddpg_agents.save_checkpoint()
-                best_score_prey = avg_score_prey
+                best_score = avg_score
         if i % PRINT_INTERVAL == 0 and i > 0:
-            print("Pred:", avg_score_pred, "Prey:", avg_score_prey)
-            print('episode', i, 'average score {:.1f}'.format((avg_score_pred + avg_score_prey)/n_agents))
+            # print("Pred:", avg_score_pred, "Prey:", avg_score_prey)
+            # print("agent 1:", avg_score_pred, "Prey:", avg_score_prey)
+            print('episode', i, 'average score {:.1f}'.format(avg_score))
 
 
 

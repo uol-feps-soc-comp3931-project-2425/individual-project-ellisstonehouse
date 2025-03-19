@@ -4,6 +4,9 @@ import pybullet_data
 import time
 import random
 
+PREDATOR = 1
+PREY = 0
+
 
 class PredPreyEnv():
 
@@ -34,12 +37,10 @@ class PredPreyEnv():
         self.num_prey = num_prey
 
         # Agent variables
-        self.predator_ids = []
-        self.prey_ids = []
-        self.predator_positions = []
-        self.prey_positions = []
-        self.predator_velocities = []
-        self.prey_velocities = []
+        self.agent_ids = []
+        self.agent_roles = []
+        self.agent_positions = []
+        self.agent_velocities = []
         
 
         # Episode settings
@@ -66,36 +67,15 @@ class PredPreyEnv():
 
         obs = []
 
+        templist = []
+
         # for each predator adds its coords, then concatenates on all prey coords
-        for pred in range(len(self.predator_ids)):
-            templist = []
-
-            templist.extend(self.predator_positions[pred])
-            templist.extend(self.predator_velocities[pred])
-            
-            for prey in range(len(self.prey_ids)):
-                templist.extend(self.prey_positions[prey])
-                templist.extend(self.prey_velocities[prey])
-
-
-            obs.append(np.array(templist, dtype=np.float32))
-            # obs.append(templist)
-
+        for agent_id in range(len(self.agent_ids)):
+            templist.append(self.agent_roles[agent_id])
+            templist.extend(self.agent_positions[agent_id])
+            templist.extend(self.agent_velocities[agent_id])
         
-        # for each prey adds its coords, then concatenates on all predator coords
-        for prey in range(len(self.prey_ids)):
-            templist = []
-
-            templist.extend(self.prey_positions[prey])
-            templist.extend(self.prey_velocities[prey])
-            
-            for pred in range(len(self.predator_ids)):
-                templist.extend(self.predator_positions[pred])
-                templist.extend(self.predator_velocities[pred])
-
-            obs.append(np.array(templist, dtype=np.float32))
-            # obs.append(templist)
-        
+        obs = [np.array(templist, dtype=np.float32)] * 3
         
         return obs
 
@@ -104,54 +84,48 @@ class PredPreyEnv():
 
         rewards = np.zeros(self.num_predators + self.num_prey, dtype=np.float32)
 
-        # Rewards for Predators
-        for i, predator_pos in enumerate(self.predator_positions):
-            reward = -0.5  # Time penalty to encourage faster hunting
-
-            for prey_pos in self.prey_positions:
-                distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
-                if distance < 1.0:  # Catch condition
-                    reward += 100.0
-                else:
-                    reward += 2.0 / distance
-
-                # # Prey Reward for reaching home
-                # for home_pos in self.home_finish:
-                #     if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:
-                #         reward -= 100.0
-                #         break
-
-            # for barrier_pos in self.barriers:
-            #     if np.linalg.norm(np.array(predator_pos) - np.array(barrier_pos)) < 1.0:
-            #         reward -= 1.0
-            #         break
-
-            rewards[i] = reward  # Assign reward to predator
-
-        # Rewards for Prey
-        for i, prey_pos in enumerate(self.prey_positions):
-            reward = 0.5
-
-            # Reward for reaching home
-            for home_pos in self.home_finish:
-                if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:
-                    reward += 100.0
-                    break
-
-            # Penalty for getting caught
-            for predator_pos in self.predator_positions:
-                distance = np.linalg.norm(np.array(prey_pos) - np.array(predator_pos))
-                if distance < 1.0:  # Catch condition
-                    reward -= 100.0
-                else:
-                    reward -= 2.0 / distance
-
-            # for barrier_pos in self.barriers:
-            #     if np.linalg.norm(np.array(prey_pos) - np.array(barrier_pos)) < 1.0:
-            #         reward -= 1.0
-            #         break
+        for agent_id, role in enumerate(self.agent_roles):
             
-            rewards[self.num_predators + i] = reward
+            # Rewards for Predators
+            if role == PREDATOR:
+                reward = 0.0
+                # reward = -0.5  # Time penalty to encourage faster hunting
+
+                predator_pos = self.agent_positions[agent_id]
+                
+                for prey_id, role2 in enumerate(self.agent_roles):
+                    if role2 == PREY:
+                        distance = np.linalg.norm(np.array(self.agent_positions[prey_id]) - np.array(predator_pos))
+                        if distance < 1.0:  # Catch condition
+                            reward += 100.0
+                        # else:
+                        #     reward += 2.0 / distance
+
+                rewards[agent_id] = reward  # Assign reward to predator
+
+            # # Rewards for Prey
+            else:
+                reward = 0.0
+                # reward = 0.5
+
+                prey_pos = self.agent_positions[agent_id]
+
+                # Reward for reaching home
+                for home_pos in self.home_finish:
+                    if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:
+                        reward += 100.0
+                        break
+
+                
+                for pred_id, role2 in enumerate(self.agent_roles):
+                    if role2 == PREDATOR:
+                        distance = np.linalg.norm(np.array(self.agent_positions[pred_id]) - np.array(prey_pos))
+                        if distance < 1.0:  # Catch condition
+                            reward -= 100.0
+                        # else:
+                        #     reward -= 2.0 / distance
+                
+                rewards[agent_id] = reward
 
         return rewards  # Return as numpy array
 
@@ -160,25 +134,62 @@ class PredPreyEnv():
 
         dones = [False]*(self.num_predators + self.num_prey)
 
-        # Check if predator catches a prey
-        for idx, predator_pos in enumerate(self.predator_positions):
-            for prey_pos in self.prey_positions:
-                if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
-                    dones[idx] = True
-                    break
+        # all prey are caught
+        if all(self.agent_roles):
+            dones = [True]*(self.num_predators + self.num_prey)
 
-        # Check if prey is caught
-        for idx, prey_pos in enumerate(self.prey_positions):
-            for predator_pos in self.predator_positions:
-                if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
-                    dones[self.num_predators + idx] = True
-                    break
+        prey_home = 0
         
-            # Check if prey is home
-            for home_pos in self.home_finish:
-                if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:  # Home base condition
-                    dones[self.num_predators + idx] = True
-                    break
+        for agent_id, role in enumerate(self.agent_roles):
+            if role == PREY:
+                prey_pos = self.agent_positions[agent_id]
+
+                for home_pos in self.home_finish:
+                    if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:  # Home base condition
+                        # prey_home+=1
+                        # break
+                        return [True]*(self.num_predators + self.num_prey)
+
+        # if prey_home == (self.num_predators + self.num_prey - sum(self.agent_roles)):
+        #     dones = [True]*(self.num_predators + self.num_prey)
+
+
+        
+
+        # # Check if predator catches a prey
+        # for idx, predator_pos in enumerate(self.predator_positions):
+        #     for prey_pos in self.prey_positions:
+        #         if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
+        #             dones[idx] = True
+        #             break
+
+        # # Check if prey is caught
+        # for idx, prey_pos in enumerate(self.prey_positions):
+        #     for predator_pos in self.predator_positions:
+        #         if np.linalg.norm(np.array(prey_pos) - np.array(predator_pos)) < 1.0:  # Catch condition
+        #             dones[self.num_predators + idx] = True
+        #             break
+        
+        #     # Check if prey is home
+        #     for home_pos in self.home_finish:
+        #         if np.linalg.norm(np.array(prey_pos) - np.array(home_pos)) < 1.0:  # Home base condition
+        #             dones[self.num_predators + idx] = True
+        #             break
+
+        for agent_id, role in enumerate(self.agent_roles):
+            
+            # Rewards for Predators
+            if role == 0:
+
+                prey_pos = self.agent_positions[agent_id]
+
+                for pred_id, role2 in enumerate(self.agent_roles):
+                    if role2 == 1:
+                        distance = np.linalg.norm(np.array(self.agent_positions[pred_id]) - np.array(prey_pos))
+                        if distance < 1.0:  # Catch condition
+                            p.changeVisualShape(self.agent_ids[agent_id], -1, rgbaColor=[1., 0.5, 0.5, 1])
+                            self.agent_roles[agent_id] = 1
+
 
         return dones
 
@@ -202,20 +213,15 @@ class PredPreyEnv():
     def step(self, actions):
 
         # Apply actions to predators
-        for i in range(self.num_predators):
-            self.change_velocity(self.predator_ids[i], actions[i])
-            self.predator_positions[i] = p.getBasePositionAndOrientation(self.predator_ids[i])[0][0:2]
+        for agent_id, agent in enumerate(self.agent_ids):
+            self.change_velocity(agent, actions[agent_id])
+            self.agent_positions[agent_id] = p.getBasePositionAndOrientation(agent)[0][0:2]
 
-            predator_vol, _ = p.getBaseVelocity(self.predator_ids[i])
-            self.predator_velocities[i] = [predator_vol[0], predator_vol[1]]
+            vol, _ = p.getBaseVelocity(agent)
+            self.agent_velocities[agent_id] = [vol[0], vol[1]]
 
-        # Apply actions to prey
-        for i in range(self.num_prey):
-            self.change_velocity(self.prey_ids[i], actions[i + self.num_predators])
-            self.prey_positions[i] = p.getBasePositionAndOrientation(self.prey_ids[i])[0][0:2]
 
-            prey_vol, _ = p.getBaseVelocity(self.prey_ids[i])
-            self.prey_velocities[i] = [prey_vol[0], prey_vol[1]]
+
 
         # Advance simulation
         p.stepSimulation()
@@ -228,18 +234,14 @@ class PredPreyEnv():
 
     def reset(self):
 
-        for agent in self.predator_ids + self.prey_ids:
+        for agent in self.agent_ids:
             p.removeBody(agent)
         
         # Set initial positions
-        self.predator_ids = []
-        self.prey_ids = []
-        self.predator_positions = []
-        self.prey_positions = []
-        self.predator_velocities = []
-        self.prey_velocities = []
-
-
+        self.agent_ids = []
+        self.agent_roles = []
+        self.agent_positions = []
+        self.agent_velocities = []
 
         sphereOrientation = p.getQuaternionFromEuler([0, 0, 0])
 
@@ -252,9 +254,10 @@ class PredPreyEnv():
 
             predator_vol, _ = p.getBaseVelocity(predator_id)
 
-            self.predator_ids.append(predator_id)
-            self.predator_positions.append(predator_pos)
-            self.predator_velocities.append([predator_vol[0], predator_vol[1]])
+            self.agent_ids.append(predator_id)
+            self.agent_roles.append(PREDATOR)
+            self.agent_positions.append(predator_pos)
+            self.agent_velocities.append([predator_vol[0], predator_vol[1]])
 
 
         # for prey_pos in [[0, 1], [0, 4]]:
@@ -269,15 +272,14 @@ class PredPreyEnv():
 
             prey_vol, _ = p.getBaseVelocity(prey_id)
 
-            self.prey_ids.append(prey_id)
-            self.prey_positions.append(prey_pos)
-            self.prey_velocities.append([prey_vol[0], prey_vol[1]])
+            self.agent_ids.append(prey_id)
+            self.agent_roles.append(PREY)
+            self.agent_positions.append(prey_pos)
+            self.agent_velocities.append([prey_vol[0], prey_vol[1]])
 
 
-        self.predator_positions = np.array(self.predator_positions, dtype=np.float32)
-        self.prey_positions = np.array(self.prey_positions, dtype=np.float32)
-        self.predator_velocities = np.array(self.predator_positions, dtype=np.float32)
-        self.prey_velocities = np.array(self.prey_positions, dtype=np.float32)
+        self.agent_positions = np.array(self.agent_positions, dtype=np.float32)
+        self.agent_velocities = np.array(self.agent_velocities, dtype=np.float32)
 
 
         return self.get_obs()
