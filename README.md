@@ -1,7 +1,10 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/yfSNuVM-)
+# Multi-Agent-Reinforcement-Learning
+PyTorch implementations of MADDPG, MAPPO (coming)
 
-Python 3.7.9
+The implementation of MADDPG is compatible with PyTorch 1.13 and PettingZoo 1.23.1.
 
-numpy      1.14.5
-pybullet   3.2.7
-torch      1.4.0
+I recommend using a virtual environment to install dependencies, as I can't guarantee
+that future versions (i.e. torch 2) won't break this implementation.
+
+This code is part of my course on multi agent reinforcement learning, found on the
+Neuralnet Academy, which you can find here: https://www.neuralnet.ai/courses
