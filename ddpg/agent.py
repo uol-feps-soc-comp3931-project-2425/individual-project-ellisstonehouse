@@ -1,8 +1,8 @@
 import numpy as np
 import torch as T
 import torch.nn.functional as F
-from networks import ActorNetwork, CriticNetwork
-from buffer import ReplayBuffer
+from ddpg.networks import ActorNetwork, CriticNetwork
+from ddpg.buffer import ReplayBuffer
 
 
 class Agent:
@@ -40,7 +40,7 @@ class Agent:
         noise = T.rand(self.n_actions).to(self.actor.device)
         noise *= T.tensor(1 - int(eval))
         mu_prime = mu + noise
-        mu_prime = T.clamp(mu_prime, 0., 1.)
+        mu_prime = T.clamp(mu_prime, -1., 1.)
 
         return mu_prime.cpu().detach().numpy()[0]
 

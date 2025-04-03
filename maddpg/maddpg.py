@@ -1,10 +1,10 @@
-from agent import Agent
+from maddpg.agent import Agent
 
 
 class MADDPG:
     def __init__(self, actor_dims, critic_dims, n_agents, n_actions,
                  alpha=1e-4, beta=1e-3, fc1=64, fc2=64, gamma=0.95, tau=0.01,
-                 chkpt_dir='tmp/maddpg/', scenario='sample'):
+                 chkpt_dir='models/maddpg/', scenario='sample'):
         self.agents = []
         chkpt_dir += scenario
         for agent_idx in range(n_agents):

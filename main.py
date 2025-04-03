@@ -1,9 +1,7 @@
 import numpy as np
-from maddpg import MADDPG
-from buffer import MultiAgentReplayBuffer
-from env import PredPreyEnv
-
-import time
+from maddpg.maddpg import MADDPG
+from maddpg.buffer import MultiAgentReplayBuffer
+from env.env import BritishBulldogEnv
 
 
 def obs_list_to_state_vector(observation):
@@ -15,12 +13,10 @@ def obs_list_to_state_vector(observation):
 
 def run():
     
-    eval = True
+    eval = False
+    scenario = 'test2'
 
-    scenario = 'test1'
-
-
-    env = PredPreyEnv(num_predators=1, num_prey=2, GUI=True)
+    env = BritishBulldogEnv(num_predators=1, num_prey=2, GUI=False)
     env.create_arena()
 
     n_agents = env.num_predators + env.num_prey
@@ -28,8 +24,11 @@ def run():
 
     actor_dims = []
     n_actions = []
-    for i in range(env.num_predators + env.num_prey):
-        actor_dims.append(5*n_agents)
+    for i in range(env.num_predators):
+        actor_dims.append(5 + 5*env.num_prey)
+        n_actions.append(2)
+    for i in range(env.num_prey):
+        actor_dims.append(5 + 5*env.num_predators)
         n_actions.append(2)
 
     critic_dims = sum(actor_dims) + sum(n_actions)
@@ -43,64 +42,51 @@ def run():
                                     n_actions, n_agents, batch_size=1024)
 
 
-    PRINT_INTERVAL = 100
-    N_GAMES = 10000
-    MAX_STEPS = 500
+    EVAL_INTERVAL = 250
+    MAX_STEPS = 10_000
+
     total_steps = 0
-    score_history = []
-    best_score = 0
+    episode = 0
+    eval_scores = []
+    eval_steps = []
 
-    if eval:
-        maddpg_agents.load_checkpoint()
+    score = evaluate(maddpg_agents, env, episode, total_steps)
+    eval_scores.append(score)
+    eval_steps.append(total_steps)
 
-    for i in range(N_GAMES):
+
+    while total_steps < MAX_STEPS:
+
         obs = env.reset()
-        score = 0
-        done = [False]*n_agents
-        episode_step = 0
+        done = [False] * n_agents
 
         while not any(done):
-            if eval:
-                time.sleep(1 / 2400)
-
-            actions = maddpg_agents.choose_action(obs, evaluate=eval)
+            actions = maddpg_agents.choose_action(obs, evaluate=False)
 
             obs_, reward, done = env.step(actions)
-
 
             list_actions = list(actions.values())
 
             state = obs_list_to_state_vector(obs)
             state_ = obs_list_to_state_vector(obs_)
-
-            if episode_step >= MAX_STEPS:
-                done = [True]*n_agents
             
             memory.store_transition(obs, state, list_actions, reward,
                                     obs_, state_, done)
 
-            if total_steps % 100 == 0 and not eval:
+            if total_steps % 100 == 0:
                 maddpg_agents.learn(memory)
-
             obs = obs_
-
-            score += sum(reward)
-
             total_steps += 1
-            episode_step += 1
 
-        score_history.append(score)
-        avg_score = np.mean(score_history[-100:])
+        if total_steps % EVAL_INTERVAL == 0:
+            score = evaluate(maddpg_agents, env, episode, total_steps)
+            eval_scores.append(score)
+            eval_steps.append(total_steps)
 
-        if not eval:
-            if avg_score > best_score:
-                maddpg_agents.save_checkpoint()
-                best_score = avg_score
-        if i % PRINT_INTERVAL == 0 and i > 0:
-            # print("Pred:", avg_score_pred, "Prey:", avg_score_prey)
-            # print("agent 1:", avg_score_pred, "Prey:", avg_score_prey)
-            print('episode', i, 'average score {:.1f}'.format(avg_score))
+        episode += 1
 
+    np.save('data/maddpg_scores.npy', np.array(eval_scores))
+    np.save('data/maddpg_steps.npy', np.array(eval_steps))
 
 
 

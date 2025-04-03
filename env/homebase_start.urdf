@@ -1,0 +1,32 @@
+<?xml version="0.0" ?>
+<robot name="colored_areas">
+
+  <!-- Add home_start area (red) -->
+  <link name="home_start_area">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="0.5 2.5 0.5"/>
+      <geometry>
+        <box size="2 6 1"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin rpy="0 0 0" xyz="0.5 2.5 0"/> <!-- Center of the home_start area -->
+      <geometry>
+        <box size="2 6 0"/> <!-- Size of the home_start area -->
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/> <!-- Red color -->
+      </material>
+    </visual>
+    <!-- No collision element -->
+  </link>
+
+
+</robot>

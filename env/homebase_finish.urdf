@@ -1,0 +1,32 @@
+<?xml version="0.0" ?>
+<robot name="colored_areas">
+
+  <!-- Add home_finish area (green) -->
+  <link name="home_finish_area">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value=".0"/>
+       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="10.5 2.5 0.5"/>
+      <geometry>
+        <box size="2 6 1"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin rpy="0 0 0" xyz="10.5 2.5 0"/> <!-- Center of the home_finish area -->
+      <geometry>
+        <box size="2 6 0"/> <!-- Size of the home_finish area -->
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 1"/> <!-- Green color -->
+      </material>
+    </visual>
+    <!-- No collision element -->
+  </link>
+
+
+</robot>
