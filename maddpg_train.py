@@ -59,7 +59,7 @@ def run():
                                     n_actions, env.n_agents, batch_size=1024)
     
 
-    for episode in range(EPISODES):
+    for episode in range(EPISODES+1):
         roles = [BULLDOG]*env.init_bulldogs + [RUNNER]*env.init_runners
         observation = env.reset()
         done = [False]*env.n_agents
@@ -127,7 +127,6 @@ def run():
         if episode % PRINT_INTERVAL == 0:
             bulldog_avg_score = np.mean(bulldog_score_history[-100:])
             runner_avg_score = np.mean(runner_score_history[-100:])
-            episodes.append(episode)
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     if bulldog_algo == MADDPG_:

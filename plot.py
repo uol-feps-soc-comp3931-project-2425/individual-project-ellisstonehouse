@@ -55,7 +55,8 @@ def plot_training_curve(algo, model, lines=None):
     ax.legend()
 
     plt.tight_layout()
-    plt.savefig('plots/maddpg_bd_vs_ddpg_r.png')
+    plt.savefig('plots/'+algo+'_'+model+'.png')
+    print('Plotted: '+algo+'_'+model)
     plt.close()
 
 
@@ -63,17 +64,22 @@ def plot_training_curve(algo, model, lines=None):
 
 if __name__ == '__main__':
 
-    # bulldog_scores = np.load('results/evaluate/test1.npy')
-    # runner_scores = np.load('results/evaluate/simple_speaker_listener.npy')
+    for algo in ['MADDPG']:
+        for model in ['model_1']:
 
-    # steps = np.load('results/evaluate/eval_steps.npy')
+            # bulldog_scores = np.load('results/'+algo+'/'+model+'_bulldogs.npy')
+            # runner_scores = np.load('results/'+algo+'/'+model+'_runners.npy')
+            # episodes = np.load('results/'+algo+'/'+model+'_eps.npy')
 
-    # plot_eval_curve(x=steps,
-    #                     scores=(bulldog_scores, runner_scores),
-    #                     filename='plots/maddpg_bd_vs_ddpg_r.png')
+            plot_training_curve(algo, model)
+
+
+            # plot_eval_curve(scores=(bulldog_scores, runner_scores), 
+            #                 episodes=episodes,
+            #                 filename='plots/'+algo+'.png')
     
-    model = 'test3'
-    algo = 'MADDPG'
+    # model = 'test3'
+    # algo = 'MADDPG'
 
-    plot_training_curve(algo, model)
+    # plot_training_curve(algo, model)
 

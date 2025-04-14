@@ -116,7 +116,6 @@ def run():
         if episode % PRINT_INTERVAL == 0:
             bulldog_avg_score = np.mean(bulldog_score_history[-100:])
             runner_avg_score = np.mean(runner_score_history[-100:])
-            episodes.append(episode)
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
         
     if bulldog_algo == DDPG_:

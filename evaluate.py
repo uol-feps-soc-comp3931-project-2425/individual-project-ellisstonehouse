@@ -16,7 +16,7 @@ MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
 bulldog_algo = MADDPG_
-runner_algo = RANDOM_
+runner_algo = MADDPG_
 
 maddpg_model = 'model_1'
 ddpg_model = 'model_1'
@@ -24,7 +24,7 @@ ddpg_model = 'model_1'
 
 def run():
     
-    env = BritishBulldogEnv(init_bulldogs=1, init_runners=2, GUI=False)
+    env = BritishBulldogEnv(init_bulldogs=1, init_runners=2, GUI=True)
 
     total_steps = 0
     bulldog_score_history = []
