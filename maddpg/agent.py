@@ -22,14 +22,14 @@ class Agent:
                                   name=agent_name+'_actor')
         self.target_actor = ActorNetwork(alpha, actor_dims, fc1, fc2,
                                          n_actions, chkpt_dir=chkpt_dir,
-                                         name=agent_name+'target__actor')
+                                         name=agent_name+'_target_actor')
 
         self.critic = CriticNetwork(beta, critic_dims, fc1, fc2,
                                     chkpt_dir=chkpt_dir,
                                     name=agent_name+'_critic')
         self.target_critic = CriticNetwork(beta, critic_dims, fc1, fc2,
                                            chkpt_dir=chkpt_dir,
-                                           name=agent_name+'_target__critic')
+                                           name=agent_name+'_target_critic')
 
         self.update_network_parameters(tau=1)
 

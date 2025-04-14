@@ -15,51 +15,42 @@ COL_GROUP_BULLDOG = 8
 
 class BritishBulldogEnv():
 
-    def __init__(self, num_bulldogs=1, num_runner=1, GUI=False):
-
+    def __init__(self, init_bulldogs, init_runners, GUI=False):
 
         self.home_start = [[x, y] for x in range(0, 2) for y in range(0, 6)]
         self.home_finish = [[x, y] for x in range(10, 12) for y in range(0, 6)]
 
-        self.barriers = [[x, y] for x in range(-1, 13) for y in range(-1, 7) if x == -1 or x == 12 or y == -1 or y == 6]
-
-        
         # Connect to PyBullet
         if GUI:
-            self.physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
+            self.physicsClient = p.connect(p.GUI)
         else:
             self.physicsClient = p.connect(p.DIRECT)
         
         #p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
         p.resetDebugVisualizerCamera(cameraDistance=6, cameraYaw=0, cameraPitch=-89, cameraTargetPosition = (6, 2, 6))
-
         p.setGravity(0,0,0)
 
         # Agent configuration
-        self.num_bulldogs = num_bulldogs
-        self.num_runner = num_runner
+        self.init_bulldogs = init_bulldogs
+        self.init_runners = init_runners
+        self.n_agents = init_bulldogs + init_runners
+
+        self.runners_home = [False]*self.n_agents
 
         # Agent variables
         self.agent_ids = []
         self.agent_roles = []
         self.agent_positions = []
         self.agent_velocities = []
-        
 
-        # Episode settings
-        self.max_steps = 500
-        self.current_step = 0
-        self.reward_goal = 100
-        self.reward_caught = -100
-        self.reward_time_penalty = -1
+        # for each agent: x, y, vx, vy, role
+        self.observation_space = [5*(self.n_agents)]*(self.n_agents)
+        # for each agent: vx, vy
+        self.action_space = [2]*(self.n_agents)
 
-        self.observation_space = [5*(num_bulldogs+num_runner)]*(num_bulldogs+num_runner)
-        self.action_space = [2]*(num_bulldogs+num_runner)
 
-        # self.reset()
-
+        self.create_arena()
 
 
     
@@ -78,150 +69,77 @@ class BritishBulldogEnv():
         
     def get_obs(self):
 
-        obs = []
-
-        templist = []
-
-        # for each bulldog adds its coords, then concatenates on all runner coords
-        for agent_id in range(len(self.agent_ids)):
-            templist.append(self.agent_roles[agent_id])
-            templist.extend(self.agent_positions[agent_id])
-            templist.extend(self.agent_velocities[agent_id])
+        obs = np.concatenate([self.agent_roles,
+                                self.agent_positions.flatten(),
+                                self.agent_velocities.flatten()]).astype(np.float32)
         
-        obs = [np.array(templist, dtype=np.float32)] * 3
+        obs = [obs] * self.n_agents
         
         return obs
 
 
     def calculate_rewards(self):
 
-        rewards = np.zeros(self.num_bulldogs + self.num_runner, dtype=np.float32)
+        rewards = np.zeros(self.n_agents, dtype=np.float32)
+        # rewards = np.array([-0.01, -0.01, -0.01], dtype=np.float32)
 
-        for agent_id, role in enumerate(self.agent_roles):
-            
-            # Rewards for Predators
-            if role == BULLDOG:
-                # reward = 0.0
-                reward = -0.5  # Time penalty to encourage faster hunting
+        role_changes = []
 
-                bulldog_pos = self.agent_positions[agent_id]
-                
-                for runner_id, role2 in enumerate(self.agent_roles):
-                    if role2 == RUNNER:
-                        distance = np.linalg.norm(np.array(self.agent_positions[runner_id]) - np.array(bulldog_pos))
-                        if distance < 1.0:  # Catch condition
-                            reward += 100.0
-                        else:
-                            reward += 2.0 / distance
+        for runner_id, role in enumerate(self.agent_roles):
+            if role == RUNNER and not self.runners_home[runner_id]:
 
-                rewards[agent_id] = reward  # Assign reward to bulldog
-
-            # # Rewards for runner
-            else:
-                # reward = 0.0
-                reward = 0.5
-
-                runner_pos = self.agent_positions[agent_id]
-
-                # Reward for reaching home
-                for home_pos in self.home_finish:
-                    if np.linalg.norm(np.array(runner_pos) - np.array(home_pos)) < 1.0:
-                        reward += 10.0
-                        break
-
+                runner_pos = self.agent_positions[runner_id]
                 
                 for bulldog_id, role2 in enumerate(self.agent_roles):
                     if role2 == BULLDOG:
-                        distance = np.linalg.norm(np.array(self.agent_positions[bulldog_id]) - np.array(runner_pos))
-                        if distance < 1.0:  # Catch condition
-                            reward -= 100.0
-                        else:
-                            reward -= 2.0 / distance
-                
-                rewards[agent_id] = reward
 
-        return rewards  # Return as numpy array
+                        bulldog_pos = self.agent_positions[bulldog_id]
+
+                        # Rewards for runner reaching home
+                        for home_pos in self.home_finish:
+                            if np.linalg.norm(np.array(runner_pos) - np.array(home_pos)) < 1.0:
+                                rewards[bulldog_id] -= 100.0 / self.agent_roles.count(BULLDOG)
+                                rewards[runner_id] += 100.0 / self.agent_roles.count(BULLDOG)
+
+                                self.runners_home[runner_id] = True
+                                break
+
+                        distance = np.linalg.norm(np.array(bulldog_pos) - np.array(runner_pos))
+                        
+                        # Rewards for runner getting caught
+                        if distance < 0.75:
+                            rewards[bulldog_id] += 100.0
+                            rewards[runner_id] -= 100.0
+
+                            role_changes.append(runner_id)
+
+                        else:
+                            rewards[bulldog_id] += (5 - distance) / 10
+                            rewards[runner_id] += (distance - 5) / 10
+
+        for runner_id in role_changes:
+            p.changeVisualShape(self.agent_ids[runner_id], -1, rgbaColor=[1., 0.5, 0.5, 1])
+            p.setCollisionFilterGroupMask(self.agent_ids[runner_id], -1, COL_GROUP_BULLDOG, COL_GROUP_WALLS | COL_GROUP_AREA)
+            self.agent_roles[runner_id] = BULLDOG
+
+        return rewards
 
 
     def done(self):
 
-        dones = [False]*(self.num_bulldogs + self.num_runner)
+        dones = [False]*(self.n_agents)
 
-        # all runner are caught
+        # all runners are caught
         if all(self.agent_roles):
-            dones = [True]*(self.num_bulldogs + self.num_runner)
+            dones = [True]*(self.n_agents)
+            return dones
 
-        runner_home = 0
-        
-        for agent_id, role in enumerate(self.agent_roles):
-            if role == RUNNER:
-                runner_pos = self.agent_positions[agent_id]
-
-                for home_pos in self.home_finish:
-                    if np.linalg.norm(np.array(runner_pos) - np.array(home_pos)) < 1.0:  # Home base condition
-                        runner_home+=1
-                        break
-                        # return [True]*(self.num_bulldogs + self.num_runner)
-
-        if runner_home == (self.num_bulldogs + self.num_runner - sum(self.agent_roles)):
-            dones = [True]*(self.num_bulldogs + self.num_runner)
-
-
-        
-
-        # # Check if bulldog catches a runner
-        # for idx, bulldog_pos in enumerate(self.bulldog_positions):
-        #     for runner_pos in self.runner_positions:
-        #         if np.linalg.norm(np.array(runner_pos) - np.array(bulldog_pos)) < 1.0:  # Catch condition
-        #             dones[idx] = True
-        #             break
-
-        # # Check if runner is caught
-        # for idx, runner_pos in enumerate(self.runner_positions):
-        #     for bulldog_pos in self.bulldog_positions:
-        #         if np.linalg.norm(np.array(runner_pos) - np.array(bulldog_pos)) < 1.0:  # Catch condition
-        #             dones[self.num_bulldogs + idx] = True
-        #             break
-        
-        #     # Check if runner is home
-        #     for home_pos in self.home_finish:
-        #         if np.linalg.norm(np.array(runner_pos) - np.array(home_pos)) < 1.0:  # Home base condition
-        #             dones[self.num_bulldogs + idx] = True
-        #             break
-
-        for agent_id, role in enumerate(self.agent_roles):
-            
-            # Rewards for Bulldogs
-            if role == 0:
-
-                runner_pos = self.agent_positions[agent_id]
-
-                for bulldog_id, role2 in enumerate(self.agent_roles):
-                    if role2 == 1:
-                        distance = np.linalg.norm(np.array(self.agent_positions[bulldog_id]) - np.array(runner_pos))
-                        if distance < 1.0:  # Catch condition
-                            p.changeVisualShape(self.agent_ids[agent_id], -1, rgbaColor=[1., 0.5, 0.5, 1])
-                            p.setCollisionFilterGroupMask(self.agent_ids[agent_id], -1, COL_GROUP_BULLDOG, COL_GROUP_WALLS | COL_GROUP_AREA)
-                            self.agent_roles[agent_id] = 1
-
+        # all runners are home
+        if sum(self.runners_home) == self.agent_roles.count(RUNNER):
+            dones = [True]*(self.n_agents)
 
         return dones
 
-
-    def change_velocity(self, agent, velocity):
-        linVel, angVel = p.getBaseVelocity(agent)
-
-        x = linVel[0] + velocity[0]
-        y = linVel[1] + velocity[1]
-        max_vel = 50
-        
-        if((x**2 + y**2)**.5 > max_vel):
-            diff = (x**2 + y**2)**.5 / max_vel
-            x /= diff
-            y /= diff
-
-        linVel = (x,y,0)
-        p.resetBaseVelocity(agent, linVel, angVel)
 
     
     def step(self, actions):
@@ -233,7 +151,8 @@ class BritishBulldogEnv():
 
             x = linVel[0] + actions[agent_id][0]
             y = linVel[1] + actions[agent_id][1]
-            max_vel = 50
+
+            max_vel = 20
             
             if((x**2 + y**2)**.5 > max_vel):
                 diff = (x**2 + y**2)**.5 / max_vel
@@ -252,15 +171,11 @@ class BritishBulldogEnv():
             vol, _ = p.getBaseVelocity(agent)
             self.agent_velocities[agent_id] = [vol[0], vol[1]]
 
-
         # Advance simulation
         p.stepSimulation()
 
-        return self.get_obs(), self.calculate_rewards(), self.done()
+        return self.agent_roles, self.get_obs(), self.calculate_rewards(), self.done()
 
-    def render(self):
-        pass
-        
 
     def reset(self):
 
@@ -273,18 +188,16 @@ class BritishBulldogEnv():
         self.agent_positions = []
         self.agent_velocities = []
 
+        self.runners_home = [False]*self.n_agents
+
         sphereOrientation = p.getQuaternionFromEuler([0, 0, 0])
 
-        bulldog_id =0
-
-        for _ in range(self.num_bulldogs):
+        for _ in range(self.init_bulldogs):
             bulldog_pos = [5.5, 2.5]
             bulldog_id = p.loadURDF("sphere2red.urdf", [bulldog_pos[0], bulldog_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
             
-            # Disable collisions with other objects
+            # Sets collisions with walls and homebases
             p.setCollisionFilterGroupMask(bulldog_id, -1, COL_GROUP_BULLDOG, COL_GROUP_WALLS | COL_GROUP_AREA)
-
-            # p.setCollisionFilterPair(bulldog_id, self.homebases_id, -1, -1, enableCollision=True)
 
             bulldog_vol, _ = p.getBaseVelocity(bulldog_id)
 
@@ -293,15 +206,13 @@ class BritishBulldogEnv():
             self.agent_positions.append(bulldog_pos)
             self.agent_velocities.append([bulldog_vol[0], bulldog_vol[1]])
 
-
-        # for runner_pos in [[0, 1], [0, 4]]:
-        for _ in range(self.num_runner):
+        for _ in range(self.init_runners):
             runner_pos = random.choice(self.home_start)
 
             runner_id = p.loadURDF("sphere2red.urdf", [runner_pos[0], runner_pos[1], 0], sphereOrientation, globalScaling=1, useFixedBase=False)
             p.changeVisualShape(runner_id, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
 
-            # Disable collisions with other objects
+            # Sets collisions with walls
             p.setCollisionFilterGroupMask(runner_id, -1, COL_GROUP_RUNNER, COL_GROUP_WALLS)
 
             runner_vol, _ = p.getBaseVelocity(runner_id)
