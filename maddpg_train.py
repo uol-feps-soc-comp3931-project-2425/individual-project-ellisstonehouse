@@ -2,6 +2,7 @@ import numpy as np
 from maddpg.maddpg import MADDPG
 from maddpg.buffer import MultiAgentReplayBuffer
 from env.env import BritishBulldogEnv
+import os
 
 
 BULLDOG = 1
@@ -22,7 +23,9 @@ bulldog_algo = MADDPG_
 runner_algo = MADDPG_
 
 model = 'model_1'
+os.makedirs('results/MADDPG/'+model, exist_ok=True)
 
+print(model)
 
 def obs_list_to_state_vector(observation):
     state = np.array([])
@@ -130,10 +133,10 @@ def run():
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     if bulldog_algo == MADDPG_:
-        np.save('results/MADDPG/'+model+'_bulldogs.npy', np.array(bulldog_score_history))
+        np.save('results/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
     if runner_algo == MADDPG_:
-        np.save('results/MADDPG/'+model+'_runners.npy', np.array(runner_score_history))
-    np.save('results/MADDPG/'+model+'_eps.npy', np.array(episodes))
+        np.save('results/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
+    np.save('results/MADDPG/'+model+'/eps.npy', np.array(episodes))
 
     env.close()
 

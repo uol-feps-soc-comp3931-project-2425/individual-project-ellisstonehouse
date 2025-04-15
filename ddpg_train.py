@@ -1,6 +1,7 @@
 import numpy as np
 from ddpg.agent import Agent
 from env.env import BritishBulldogEnv
+import os
 
 
 BULLDOG = 1
@@ -19,9 +20,10 @@ BETA = 1e-3
 TAU = 0.01
 
 bulldog_algo = DDPG_
-runner_algo = RANDOM_
+runner_algo = DDPG_
 
 model = 'model_1'
+os.makedirs('results/DDPG/'+model, exist_ok=True)
 
 
 def run():
@@ -119,10 +121,10 @@ def run():
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
         
     if bulldog_algo == DDPG_:
-        np.save('results/DDPG/'+model+'_bulldogs.npy', np.array(bulldog_score_history))
+        np.save('results/DDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
     if runner_algo == DDPG_:
-        np.save('results/DDPG/'+model+'_runners.npy', np.array(runner_score_history))
-    np.save('results/DDPG/'+model+'_eps.npy', np.array(episodes))
+        np.save('results/DDPG/'+model+'/runners.npy', np.array(runner_score_history))
+    np.save('results/DDPG/'+model+'/eps.npy', np.array(episodes))
 
     env.close()
 
