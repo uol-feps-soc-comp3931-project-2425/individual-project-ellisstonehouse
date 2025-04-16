@@ -149,17 +149,17 @@ class BritishBulldogEnv():
             # apply action to velocity
             linVel, angVel = p.getBaseVelocity(agent)
 
-            x = linVel[0] + actions[agent_id][0]
-            y = linVel[1] + actions[agent_id][1]
+            vx = linVel[0] + actions[agent_id][0]
+            vy = linVel[1] + actions[agent_id][1]
 
             max_vel = 20
             
-            if((x**2 + y**2)**.5 > max_vel):
-                diff = (x**2 + y**2)**.5 / max_vel
-                x /= diff
-                y /= diff
+            if((vx**2 + vy**2)**.5 > max_vel):
+                diff = (vx**2 + vy**2)**.5 / max_vel
+                vx /= diff
+                vy /= diff
 
-            linVel = (x,y,0)
+            linVel = (vx,vy,0)
 
             # lock the z axis to 0 due to collisions
             pos, ori = p.getBasePositionAndOrientation(agent)
