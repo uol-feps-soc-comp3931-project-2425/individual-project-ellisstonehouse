@@ -5,27 +5,26 @@ from env.env import BritishBulldogEnv
 import os
 
 
-BULLDOG = 1
-RUNNER = 0
-MADDPG_ = 0
-RANDOM_ = 1
+# BULLDOG = 1
+# RUNNER = 0
+# MADDPG_ = 0
+# RANDOM_ = 1
 
-EPISODES = 10_000
-MAX_STEPS = 500
-PRINT_INTERVAL = 100
+# EPISODES = 10_000
+# MAX_STEPS = 500
+# PRINT_INTERVAL = 100
 
-GAMMA = 0.95
-ALPHA = 1e-4
-BETA = 1e-3
-TAU = 0.01
+# ALPHA = 1e-3
+# BETA = 1e-3
+# GAMMA = 0.95
+# TAU = 0.01
 
-bulldog_algo = MADDPG_
-runner_algo = MADDPG_
+# bulldog_algo = MADDPG_
+# runner_algo = MADDPG_
 
-model = 'model_3'
-os.makedirs('results/MADDPG/'+model, exist_ok=True)
+# model = 'model_1'
+# os.makedirs('results/DDPG/'+model, exist_ok=True)
 
-print(model)
 
 def obs_list_to_state_vector(observation):
     state = np.array([])
@@ -133,13 +132,37 @@ def run():
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     if bulldog_algo == MADDPG_:
-        np.save('results/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
+        np.save('results3/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
     if runner_algo == MADDPG_:
-        np.save('results/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
-    np.save('results/MADDPG/'+model+'/eps.npy', np.array(episodes))
+        np.save('results3/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
+    np.save('results3/MADDPG/'+model+'/eps.npy', np.array(episodes))
 
     env.close()
 
 
 if __name__ == '__main__':
-    run()
+
+    BULLDOG = 1
+    RUNNER = 0
+    MADDPG_ = 0
+    RANDOM_ = 1
+
+    EPISODES = 5_000
+    MAX_STEPS = 500
+    PRINT_INTERVAL = 100
+
+    GAMMA = 0.95
+    TAU = 0.01
+
+
+    for bulldog_algo in [MADDPG_, RANDOM_]:
+        runner_algo = not(bulldog_algo)
+        for ALPHA in [1e-3, 1e-4]:
+            for BETA in [1e-3, 1e-4]:
+
+                model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)
+
+                os.makedirs('results3/MADDPG/'+model, exist_ok=True)
+                print(model)
+
+                run()

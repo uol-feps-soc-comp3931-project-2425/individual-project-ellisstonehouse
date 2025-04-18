@@ -61,7 +61,6 @@ def plot_training_curve(algo, model, lines=None):
 
 
 
-
 if __name__ == '__main__':
 
     for algo in ['MADDPG']:
