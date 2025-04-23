@@ -1,25 +1,37 @@
 import numpy as np
-from maddpg.maddpg import MADDPG
-from ddpg.agent import Agent
+from ddpg.agent import Agent as DDPG_Agent
+from maddpg.agent import Agent as MADDPG_Agent
 from env.env import BritishBulldogEnv
+
+import os
 
 
 BULLDOG = 1
 RUNNER = 0
 
-MADDPG_ = 0
-DDPG_ = 1
-RANDOM_ = 2
+MADDPG = 0
+DDPG = 1
+RANDOM = 2
 
 EPISODES = 10_000
 MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
-bulldog_algo = MADDPG_
-runner_algo = MADDPG_
+ALPHA = 1e-3
+BETA = 1e-3
+GAMMA = 0.95
+TAU = 0.01
+
+bulldog_algo = DDPG
+runner_algo = DDPG
 
 maddpg_model = 'model_1'
 ddpg_model = 'model_1'
+
+bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
+r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
+
+os.makedirs('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model, exist_ok=True)
 
 
 def run():
@@ -31,8 +43,8 @@ def run():
     runner_score_history = []
     episodes = []
 
-
-    if bulldog_algo == MADDPG_ or runner_algo == MADDPG_:
+    maddpg_agents = []
+    if bulldog_algo == MADDPG or runner_algo == MADDPG:
         actor_dims = []
         n_actions = []
         for i in range(env.n_agents):
@@ -42,20 +54,23 @@ def run():
         critic_dims = sum(actor_dims) + sum(n_actions)
 
 
-        maddpg_agents = MADDPG(actor_dims=actor_dims, critic_dims=critic_dims,
-                               n_agents=env.n_agents, n_actions=n_actions,
-                               model=maddpg_model)
+        for agent_idx in range(env.n_agents):
+            maddpg_agents.append(MADDPG_Agent(actor_dims[agent_idx], critic_dims,
+                                n_actions[agent_idx], env.n_agents, agent_idx,
+                                alpha=ALPHA, beta=BETA, gamma=GAMMA, tau=TAU, 
+                                fc1=64, fc2=64, model=maddpg_model))
 
-        maddpg_agents.load_checkpoint()
+        for agent in maddpg_agents:
+            agent.load_models()
 
     ddpg_agents = []
-    if bulldog_algo == DDPG_ or runner_algo == DDPG_:
+    if bulldog_algo == DDPG or runner_algo == DDPG:
         for agent_idx in range(env.n_agents):
-            input_dims = env.observation_space[0]
-            n_actions = env.action_space[0]
+            input_dims = env.observation_space[agent_idx]
+            n_actions = env.action_space[agent_idx]
 
-            ddpg_agents.append(Agent(agent_idx, alpha=1e-3, beta=1e-3,
-                        input_dims=input_dims, tau=0.01, gamma=0.95,
+            ddpg_agents.append(DDPG_Agent(agent_idx, alpha=ALPHA, beta=BETA,
+                        input_dims=input_dims, tau=TAU, gamma=GAMMA,
                         batch_size=1024, fc1_dims=64, fc2_dims=64,
                         n_actions=n_actions, model=ddpg_model))
 
@@ -76,23 +91,20 @@ def run():
 
             actions = [0]*env.n_agents
 
-            if bulldog_algo == MADDPG_ or runner_algo == MADDPG_:
-                maddpg_actions = maddpg_agents.choose_action(observation, evaluate=True)
-
             # action mask depending on chosen algorithm
             for agent_idx, role in enumerate(roles):
                 if role == BULLDOG:
-                    if bulldog_algo == MADDPG_:
-                        actions[agent_idx] = maddpg_actions[agent_idx]
-                    elif bulldog_algo == DDPG_:
+                    if bulldog_algo == MADDPG:
+                        actions[agent_idx] = maddpg_agents[agent_idx].choose_action(observation[agent_idx])
+                    elif bulldog_algo == DDPG:
                         actions[agent_idx] = ddpg_agents[agent_idx].choose_action(observation[agent_idx])
                     else: # RANDOM
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
                         
                 else: #RUNNER
-                    if runner_algo == MADDPG_:
-                        actions[agent_idx] = maddpg_actions[agent_idx]
-                    elif runner_algo == DDPG_:
+                    if runner_algo == MADDPG:
+                        actions[agent_idx] = maddpg_agents[agent_idx].choose_action(observation[agent_idx])
+                    elif runner_algo == DDPG:
                         actions[agent_idx] = ddpg_agents[agent_idx].choose_action(observation[agent_idx])
                     else: # RANDOM
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
@@ -126,9 +138,9 @@ def run():
             episodes.append(episode)
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
-    np.save('results/evaluate/'+maddpg_model+'.npy', np.array(bulldog_score_history))
-    np.save('results/evaluate/'+ddpg_model+'.npy', np.array(runner_score_history))
-    np.save('results/evaluate/episodes.npy', np.array(episodes))
+    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/'+'bulldogs.npy', np.array(bulldog_score_history))
+    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/'+'runners.npy', np.array(runner_score_history))
+    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/episodes.npy', np.array(episodes))
 
     env.close()
 

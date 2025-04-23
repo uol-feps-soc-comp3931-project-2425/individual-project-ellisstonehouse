@@ -6,8 +6,8 @@ import os
 
 BULLDOG = 1
 RUNNER = 0
-DDPG_ = 0
-RANDOM_ = 1
+DDPG = 0
+RANDOM = 1
 
 EPISODES = 10_000
 MAX_STEPS = 500
@@ -18,12 +18,11 @@ BETA = 1e-3
 GAMMA = 0.95
 TAU = 0.01
 
-bulldog_algo = DDPG_
-runner_algo = DDPG_
+bulldog_algo = DDPG
+runner_algo = DDPG
 
 model = 'model_1'
 os.makedirs('results/DDPG/'+model, exist_ok=True)
-
 
 def run():
 
@@ -61,14 +60,14 @@ def run():
         while not all(done):
             
             # eval false includes noise for better exploration
-            actions = [agent.choose_action(observation[idx], eval=False)
+            actions = [agent.choose_action(observation[idx], evaluate=False)
                        for idx, agent in enumerate(agents)]
 
             # randomise role actions for optimal policy
             for idx in range(len(actions)):
-                if roles[idx] == BULLDOG and bulldog_algo == RANDOM_:
+                if roles[idx] == BULLDOG and bulldog_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
-                elif roles[idx] == RUNNER and runner_algo == RANDOM_:
+                elif roles[idx] == RUNNER and runner_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
             
             roles, observation_, rewards, done = env.step(actions)
@@ -119,9 +118,9 @@ def run():
             runner_avg_score = np.mean(runner_score_history[-100:])
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
         
-    if bulldog_algo == DDPG_:
+    if bulldog_algo == DDPG:
         np.save('results/DDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
-    if runner_algo == DDPG_:
+    if runner_algo == DDPG:
         np.save('results/DDPG/'+model+'/runners.npy', np.array(runner_score_history))
     np.save('results/DDPG/'+model+'/eps.npy', np.array(episodes))
 

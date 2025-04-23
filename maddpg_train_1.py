@@ -1,14 +1,13 @@
 import numpy as np
-from maddpg.maddpg import MADDPG
 from maddpg.buffer import MultiAgentReplayBuffer
+from maddpg.agent import Agent
 from env.env import BritishBulldogEnv
 import os
 
-
 # BULLDOG = 1
 # RUNNER = 0
-# MADDPG_ = 0
-# RANDOM_ = 1
+# MADDPG = 0
+# RANDOM = 1
 
 # EPISODES = 10_000
 # MAX_STEPS = 500
@@ -19,11 +18,11 @@ import os
 # GAMMA = 0.95
 # TAU = 0.01
 
-# bulldog_algo = MADDPG_
-# runner_algo = MADDPG_
+# bulldog_algo = MADDPG
+# runner_algo = MADDPG
 
 # model = 'model_1'
-# os.makedirs('results/DDPG/'+model, exist_ok=True)
+# os.makedirs('results/MADDPG/'+model, exist_ok=True)
 
 
 def obs_list_to_state_vector(observation):
@@ -51,10 +50,14 @@ def run():
         n_actions.append(env.action_space[i])
     critic_dims = sum(actor_dims) + sum(n_actions)
 
+    agents = []
 
-    maddpg_agents = MADDPG(actor_dims, critic_dims, env.n_agents, n_actions,
-                           gamma=GAMMA, alpha=ALPHA, beta=BETA, tau=TAU,
-                           model=model)
+    for agent_idx in range(env.n_agents):
+        agents.append(Agent(actor_dims[agent_idx], critic_dims,
+                            n_actions[agent_idx], env.n_agents, agent_idx,
+                            alpha=ALPHA, beta=BETA, gamma=GAMMA, tau=TAU, 
+                            fc1=64, fc2=64, model=model))
+    
 
     critic_dims = sum(actor_dims)
     memory = MultiAgentReplayBuffer(1_000_000, critic_dims, actor_dims,
@@ -73,13 +76,15 @@ def run():
         while not all(done):
 
             # eval false includes noise for better exploration
-            actions = maddpg_agents.choose_action(observation, evaluate=False)
+            actions = [agent.choose_action(observation[idx], evaluate=False)
+                       for idx, agent in enumerate(agents)]
+            
             
             # for training against random roles
             for idx in range(len(actions)):
-                if roles[idx] == BULLDOG and bulldog_algo == RANDOM_:
+                if roles[idx] == BULLDOG and bulldog_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
-                elif roles[idx] == RUNNER and runner_algo == RANDOM_:
+                elif roles[idx] == RUNNER and runner_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
 
             roles, observation_, rewards, done = env.step(actions)
@@ -97,7 +102,8 @@ def run():
 
             # every 100 steps learn
             if total_steps % 100 == 0:
-                maddpg_agents.learn(memory)
+                for agent in agents:
+                    agent.learn(memory, agents)
 
             observation = observation_
 
@@ -112,15 +118,15 @@ def run():
             total_steps += 1
             episode_step += 1
         
-        scores_history.append(scores)
+        # scores_history.append(scores)
 
-        # average agent scores for last 100 episodes
-        avg_agent_scores = np.mean(scores_history[-100:], axis=0)
+        # # average agent scores for last 100 episodes
+        # avg_agent_scores = np.mean(scores_history[-100:], axis=0)
 
-        for idx, agent in enumerate(maddpg_agents.agents):
-            if avg_agent_scores[idx] > best_agent_scores[idx]:
-                agent.save_models()
-                best_agent_scores[idx] = avg_agent_scores[idx]
+        # for idx, agent in enumerate(agents):
+        #     if avg_agent_scores[idx] > best_agent_scores[idx]:
+        #         agent.save_models()
+        #         best_agent_scores[idx] = avg_agent_scores[idx]
 
         bulldog_score_history.append(bulldog_score)
         runner_score_history.append(runner_score)
@@ -131,9 +137,9 @@ def run():
             runner_avg_score = np.mean(runner_score_history[-100:])
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
-    if bulldog_algo == MADDPG_:
+    if bulldog_algo == MADDPG:
         np.save('results1/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
-    if runner_algo == MADDPG_:
+    if runner_algo == MADDPG:
         np.save('results1/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
     np.save('results1/MADDPG/'+model+'/eps.npy', np.array(episodes))
 
@@ -144,8 +150,8 @@ if __name__ == '__main__':
 
     BULLDOG = 1
     RUNNER = 0
-    MADDPG_ = 0
-    RANDOM_ = 1
+    MADDPG = 0
+    RANDOM = 1
 
     EPISODES = 5_000
     MAX_STEPS = 500
@@ -154,8 +160,7 @@ if __name__ == '__main__':
     GAMMA = 0.95
     TAU = 0.01
 
-
-    for bulldog_algo in [MADDPG_, RANDOM_]:
+    for bulldog_algo in [MADDPG, RANDOM]:
         runner_algo = not(bulldog_algo)
         for ALPHA in [1e-3, 1e-4]:
             for BETA in [1e-3, 1e-4]:

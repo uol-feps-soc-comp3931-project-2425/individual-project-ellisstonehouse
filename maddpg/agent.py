@@ -1,32 +1,36 @@
 import numpy as np
 import torch as T
 import torch.nn.functional as F
-from maddpg.networks import ActorNetwork, CriticNetwork
+from networks import ActorNetwork, CriticNetwork
+
+import os
 
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions,
-                 n_agents, agent_idx, chkpt_dir, min_action,
-                 max_action, alpha=1e-4, beta=1e-3, fc1=64,
-                 fc2=64, gamma=0.95, tau=0.01):
+                 n_agents, agent_idx, chkpt_dir='models/maddpg/', model='sample',
+                 alpha=1e-4, beta=1e-3, fc1=64, fc2=64,
+                 gamma=0.95, tau=0.01):
         self.gamma = gamma
         self.tau = tau
         self.n_actions = n_actions
         agent_name = 'agent_%s' % agent_idx
         self.agent_idx = agent_idx
-        self.min_action = min_action
-        self.max_action = max_action
+
+        chkpt_dir += model
+        os.makedirs(chkpt_dir, exist_ok=True)
+
 
         self.actor = ActorNetwork(alpha, actor_dims, fc1, fc2, n_actions,
                                   chkpt_dir=chkpt_dir,
                                   name=agent_name+'_actor')
-        self.target_actor = ActorNetwork(alpha, actor_dims, fc1, fc2,
-                                         n_actions, chkpt_dir=chkpt_dir,
-                                         name=agent_name+'_target_actor')
-
         self.critic = CriticNetwork(beta, critic_dims, fc1, fc2,
                                     chkpt_dir=chkpt_dir,
                                     name=agent_name+'_critic')
+        
+        self.target_actor = ActorNetwork(alpha, actor_dims, fc1, fc2,
+                                         n_actions, chkpt_dir=chkpt_dir,
+                                         name=agent_name+'_target_actor')
         self.target_critic = CriticNetwork(beta, critic_dims, fc1, fc2,
                                            chkpt_dir=chkpt_dir,
                                            name=agent_name+'_target_critic')
@@ -40,8 +44,8 @@ class Agent:
         noise = T.randn(size=(self.n_actions,)).to(self.actor.device)
         noise *= T.tensor(1 - int(evaluate))
         action = T.clamp(actions + noise,
-                         T.tensor(self.min_action, device=self.actor.device),
-                         T.tensor(self.max_action, device=self.actor.device))
+                         T.tensor(-1.0, device=self.actor.device),
+                         T.tensor(1.0, device=self.actor.device))
         return action.data.cpu().numpy()[0]
 
     def update_network_parameters(self, tau=None):

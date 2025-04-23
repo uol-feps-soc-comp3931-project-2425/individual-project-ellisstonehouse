@@ -2,7 +2,7 @@ import numpy as np
 import torch as T
 import torch.nn.functional as F
 import os
-from ddpg.networks import ActorNetwork, CriticNetwork
+from networks import ActorNetwork, CriticNetwork
 from ddpg.buffer import ReplayBuffer
 
 
@@ -12,41 +12,45 @@ class Agent:
                  batch_size=64, chkpt_dir='models/ddpg/', model='sample'):
         self.gamma = gamma
         self.tau = tau
-        self.agent_name = 'agent_%s' % agent_idx
         self.batch_size = batch_size
-        self.alpha = alpha
-        self.beta = beta
         self.n_actions = n_actions
+        agent_name = 'agent_%s' % agent_idx
+
+        actor_dims = input_dims
+        critic_dims = input_dims + n_actions
+
+        fc1 = fc1_dims
+        fc2 = fc2_dims
 
 
         chkpt_dir += model
         os.makedirs(chkpt_dir, exist_ok=True)
 
         self.memory = ReplayBuffer(max_size, input_dims, n_actions)
-
-        self.actor = ActorNetwork(alpha, input_dims, fc1_dims, fc2_dims,
-                                  n_actions=n_actions, chkpt_dir=chkpt_dir,
-                                  name=self.agent_name+'_actor')
-        self.critic = CriticNetwork(beta, input_dims, fc1_dims, fc2_dims,
-                                    n_actions=n_actions, chkpt_dir=chkpt_dir,
-                                    name=self.agent_name+'_critic')
-
-        self.target_actor = ActorNetwork(alpha, input_dims, fc1_dims, fc2_dims,
-                                         n_actions=n_actions, chkpt_dir=chkpt_dir,
-                                         name=self.agent_name+'_target_actor')
-
-        self.target_critic = CriticNetwork(beta, input_dims, fc1_dims, fc2_dims,
-                                           n_actions=n_actions, chkpt_dir=chkpt_dir,
-                                           name=self.agent_name+'_target_critic')
+        
+        
+        self.actor = ActorNetwork(alpha, actor_dims, fc1, fc2, n_actions,
+                                  chkpt_dir=chkpt_dir,
+                                  name=agent_name+'_actor')
+        self.critic = CriticNetwork(beta, critic_dims, fc1, fc2,
+                                    chkpt_dir=chkpt_dir,
+                                    name=agent_name+'_critic')
+        
+        self.target_actor = ActorNetwork(alpha, actor_dims, fc1, fc2,
+                                         n_actions, chkpt_dir=chkpt_dir,
+                                         name=agent_name+'_target_actor')
+        self.target_critic = CriticNetwork(beta, critic_dims, fc1, fc2,
+                                           chkpt_dir=chkpt_dir,
+                                           name=agent_name+'_target_critic')
 
         self.update_network_parameters(tau=1)
 
-    def choose_action(self, observation, eval=False):
+    def choose_action(self, observation, evaluate=False):
         state = T.tensor(observation[np.newaxis, :], dtype=T.float,
                          device=self.actor.device)
         mu = self.actor.forward(state).to(self.actor.device)
         noise = T.rand(self.n_actions).to(self.actor.device)
-        noise *= T.tensor(1 - int(eval))
+        noise *= T.tensor(1 - int(evaluate))
         mu_prime = mu + noise
         mu_prime = T.clamp(mu_prime, -1., 1.)
 

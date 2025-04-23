@@ -7,11 +7,12 @@ import torch.optim as optim
 
 class CriticNetwork(nn.Module):
     def __init__(self, beta, input_dims, fc1_dims, fc2_dims,
-                 n_actions, name, chkpt_dir):
+                 name, chkpt_dir):
         super(CriticNetwork, self).__init__()
 
         self.chkpt_file = os.path.join(chkpt_dir, name)
-        self.fc1 = nn.Linear(input_dims+n_actions, fc1_dims)
+
+        self.fc1 = nn.Linear(input_dims, fc1_dims)
         self.fc2 = nn.Linear(fc1_dims, fc2_dims)
         self.q = nn.Linear(fc2_dims, 1)
 
@@ -31,7 +32,7 @@ class CriticNetwork(nn.Module):
         T.save(self.state_dict(), self.chkpt_file)
 
     def load_checkpoint(self):
-        self.load_state_dict(T.load(self.chkpt_file))
+        self.load_state_dict(T.load(self.chkpt_file, map_location=self.device))
 
 
 class ActorNetwork(nn.Module):
@@ -43,7 +44,6 @@ class ActorNetwork(nn.Module):
 
         self.fc1 = nn.Linear(input_dims, fc1_dims)
         self.fc2 = nn.Linear(fc1_dims, fc2_dims)
-
         self.pi = nn.Linear(fc2_dims, n_actions)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
@@ -63,4 +63,4 @@ class ActorNetwork(nn.Module):
         T.save(self.state_dict(), self.chkpt_file)
 
     def load_checkpoint(self):
-        self.load_state_dict(T.load(self.chkpt_file))
+        self.load_state_dict(T.load(self.chkpt_file, map_location=self.device))
