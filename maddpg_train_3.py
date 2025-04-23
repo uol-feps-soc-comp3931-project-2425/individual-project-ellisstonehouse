@@ -138,10 +138,10 @@ def run():
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     if bulldog_algo == MADDPG:
-        np.save('results1/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
+        np.save('results3/MADDPG/'+model+'/bulldogs.npy', np.array(bulldog_score_history))
     if runner_algo == MADDPG:
-        np.save('results1/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
-    np.save('results1/MADDPG/'+model+'/eps.npy', np.array(episodes))
+        np.save('results3/MADDPG/'+model+'/runners.npy', np.array(runner_score_history))
+    np.save('results3/MADDPG/'+model+'/eps.npy', np.array(episodes))
 
     env.close()
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     MAX_STEPS = 500
     PRINT_INTERVAL = 100
 
-    GAMMA = 0.95
+    GAMMA = 0.99
     TAU = 0.01
 
     for bulldog_algo in [MADDPG, RANDOM]:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
                 model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)
 
-                os.makedirs('results1/MADDPG/'+model, exist_ok=True)
+                os.makedirs('results3/MADDPG/'+model, exist_ok=True)
                 print(model)
 
                 run()

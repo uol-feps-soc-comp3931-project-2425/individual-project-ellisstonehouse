@@ -157,7 +157,7 @@ if __name__ == '__main__':
     MAX_STEPS = 500
     PRINT_INTERVAL = 100
 
-    GAMMA = 0.95
+    GAMMA = 0.99
     TAU = 0.01
 
     for bulldog_algo in [MADDPG, RANDOM]:
