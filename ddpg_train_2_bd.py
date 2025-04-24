@@ -138,7 +138,7 @@ if __name__ == '__main__':
     DDPG = 0
     RANDOM = 1
 
-    EPISODES = 5
+    EPISODES = 5_000
     MAX_STEPS = 500
     PRINT_INTERVAL = 100
 
