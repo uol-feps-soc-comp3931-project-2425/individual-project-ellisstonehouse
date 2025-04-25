@@ -30,7 +30,6 @@ def run():
 
     total_steps = 0
     scores_history = []
-    best_agent_scores = np.zeros(env.n_agents)
     bulldog_score_history = []
     runner_score_history = []
     episodes = []
@@ -102,12 +101,12 @@ def run():
         scores_history.append(scores)
 
         # average agent scores for last 100 episodes
-        avg_agent_scores = np.mean(scores_history[-100:], axis=0)
+        avg_scores = np.mean(scores_history, axis=0)
+        avg_last_100_scores = np.mean(scores_history[-100:], axis=0)
 
         for idx, agent in enumerate(agents):
-            if avg_agent_scores[idx] > best_agent_scores[idx]:
+            if avg_last_100_scores[idx] > avg_scores[idx]:
                 agent.save_models()
-                best_agent_scores[idx] = avg_agent_scores[idx]
 
         bulldog_score_history.append(bulldog_score)
         runner_score_history.append(runner_score)
