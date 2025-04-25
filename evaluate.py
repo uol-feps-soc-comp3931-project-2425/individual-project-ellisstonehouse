@@ -6,37 +6,37 @@ from env.env import BritishBulldogEnv
 import os
 
 
-BULLDOG = 1
-RUNNER = 0
+# BULLDOG = 1
+# RUNNER = 0
 
-MADDPG = 0
-DDPG = 1
-RANDOM = 2
+# MADDPG = 0
+# DDPG = 1
+# RANDOM = 2
 
-EPISODES = 10_000
-MAX_STEPS = 500
-PRINT_INTERVAL = 100
+# EPISODES = 10_000
+# MAX_STEPS = 500
+# PRINT_INTERVAL = 100
 
-ALPHA = 1e-3
-BETA = 1e-3
-GAMMA = 0.95
-TAU = 0.01
+ALPHA = 1
+BETA = 1
+GAMMA = 1
+TAU = 1
 
-bulldog_algo = DDPG
-runner_algo = DDPG
+# bulldog_algo = DDPG
+# runner_algo = DDPG
 
-maddpg_model = 'model_1'
-ddpg_model = 'model_1'
+# maddpg_model = 'model_1'
+# ddpg_model = 'model_1'
 
-bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
-r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
+# bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
+# r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
 
-os.makedirs('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model, exist_ok=True)
+# os.makedirs('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model, exist_ok=True)
 
 
 def run():
     
-    env = BritishBulldogEnv(init_bulldogs=1, init_runners=2, GUI=True)
+    env = BritishBulldogEnv(init_bulldogs=1, init_runners=2, GUI=False)
 
     total_steps = 0
     bulldog_score_history = []
@@ -138,12 +138,57 @@ def run():
             episodes.append(episode)
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
-    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/'+'bulldogs.npy', np.array(bulldog_score_history))
-    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/'+'runners.npy', np.array(runner_score_history))
-    np.save('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model+'/episodes.npy', np.array(episodes))
+    np.save('results/evaluate/'+file+'/'+'bulldogs.npy', np.array(bulldog_score_history))
+    np.save('results/evaluate/'+file+'/'+'runners.npy', np.array(runner_score_history))
+    np.save('results/evaluate/'+file+'/episodes.npy', np.array(episodes))
 
     env.close()
 
 
 if __name__ == '__main__':
-    run()
+    
+    BULLDOG = 1
+    RUNNER = 0
+
+    MADDPG = 0
+    DDPG = 1
+    RANDOM = 2
+
+    EPISODES = 10
+    MAX_STEPS = 500
+    PRINT_INTERVAL = 100
+
+
+    bulldog_algo = DDPG
+    runner_algo = DDPG
+
+    maddpg_model = 'model_1'
+
+
+    for bulldog_algo in [RANDOM, DDPG, MADDPG]:
+        for runner_algo in [RANDOM, DDPG, MADDPG]:
+                if bulldog_algo == RANDOM and runner_algo == RANDOM:
+                    continue
+
+                for ddpg_model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
+
+                    bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
+                    r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
+
+                    file = ''
+
+                    if bulldog_algo == RANDOM:
+                        file += 'RANDOM_vs_'
+                    else:
+                        file += bd_alg_txt+'_'+maddpg_model+'_vs_'
+
+                    if runner_algo == RANDOM:
+                        file += 'RANDOM'
+                    else:
+                        file += r_alg_txt+'_'+ddpg_model
+
+                    os.makedirs('results/evaluate/'+file, exist_ok=True)
+                    print(file)
+
+
+                    run()
