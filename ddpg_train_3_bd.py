@@ -147,8 +147,8 @@ if __name__ == '__main__':
 
     for bulldog_algo in [DDPG]:
         runner_algo = not(bulldog_algo)
-        for ALPHA in [1e-3, 1e-4]:
-            for BETA in [1e-3, 1e-4]:
+        for ALPHA in [1e-4]:
+            for BETA in [1e-4]:
                 for GAMMA in [0.95, 0.99]:
 
                     model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)

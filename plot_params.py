@@ -52,9 +52,11 @@ if __name__ == '__main__':
     TAU = 0.01
 
 
-    # plot_training_curve(algo, model)
+    # # plot_training_curve(algo, model)
     for algorithm in ['DDPG', 'MADDPG']:
         for bulldog_algo in [ALGO, RANDOM]:
+    # for algorithm in ['DDPG']:
+    #     for bulldog_algo in [RANDOM]:
             runner_algo = not(bulldog_algo)
             for GAMMA in [0.95, 0.99]:
                 for BETA in [1e-3, 1e-4]:
