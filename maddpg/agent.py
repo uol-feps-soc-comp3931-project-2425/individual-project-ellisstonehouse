@@ -8,7 +8,7 @@ import os
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions,
-                 n_agents, agent_idx, chkpt_dir='models/maddpg/', model='sample',
+                 n_agents, agent_idx, chkpt_dir='models/MADDPG/', model='sample',
                  alpha=1e-4, beta=1e-3, fc1=64, fc2=64,
                  gamma=0.95, tau=0.01):
         self.gamma = gamma
