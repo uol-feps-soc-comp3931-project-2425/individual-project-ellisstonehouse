@@ -9,7 +9,7 @@ RUNNER = 0
 MADDPG = 0
 RANDOM = 1
 
-EPISODES = 5_000
+EPISODES = 10_000
 MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
@@ -21,7 +21,7 @@ TAU = 0.01
 bulldog_algo = MADDPG
 runner_algo = MADDPG
 
-model = 'model_1'
+model = 'model_4'
 os.makedirs('results/MADDPG/'+model, exist_ok=True)
 
 
