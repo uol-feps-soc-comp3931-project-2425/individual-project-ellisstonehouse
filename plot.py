@@ -124,11 +124,10 @@ def plot_training_curve_all(algo, lines=None):
 
 if __name__ == '__main__':
 
-    # for algo in ['DDPG', 'MADDPG']:
-    #     for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
-    #         plot_training_curve(algo, model)
-
-    #     plot_training_curve_all(algo)
+    for algo in ['DDPG', 'MADDPG']:
+        for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
+            plot_training_curve(algo, model)
+        plot_training_curve_all(algo)
     
 
     for bulldog_algo in ['DDPG', 'MADDPG']:
