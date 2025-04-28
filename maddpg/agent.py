@@ -9,7 +9,7 @@ import os
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions,
                  n_agents, agent_idx, chkpt_dir='models/MADDPG/', model='sample',
-                 alpha=1e-4, beta=1e-3, fc1=64, fc2=64,
+                 alpha=1e-3, beta=1e-3, fc1=64, fc2=64,
                  gamma=0.95, tau=0.01):
         self.gamma = gamma
         self.tau = tau
@@ -85,18 +85,21 @@ class Agent:
         device = self.actor.device
 
         states = T.tensor(np.array(states), dtype=T.float, device=device)
+        actions = [T.tensor(actions[idx], device=device, dtype=T.float)
+                   for idx in range(len(agent_list))]
         rewards = T.tensor(np.array(rewards), dtype=T.float, device=device)
-        states_ = T.tensor(np.array(states_), dtype=T.float, device=device)
         dones = T.tensor(np.array(dones), device=device)
+        states_ = T.tensor(np.array(states_), dtype=T.float, device=device)
 
+        # individual agent observations
         actor_states = [T.tensor(actor_states[idx],
                                  device=device, dtype=T.float)
                         for idx in range(len(agent_list))]
+        # individual agent next observations
         actor_new_states = [T.tensor(actor_new_states[idx],
                                      device=device, dtype=T.float)
                             for idx in range(len(agent_list))]
-        actions = [T.tensor(actions[idx], device=device, dtype=T.float)
-                   for idx in range(len(agent_list))]
+
 
         with T.no_grad():
             new_actions = T.cat([agent.target_actor(actor_new_states[idx])

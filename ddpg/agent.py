@@ -9,7 +9,7 @@ from ddpg.buffer import ReplayBuffer
 class Agent:
     def __init__(self, agent_idx, alpha, beta, input_dims, tau, n_actions, gamma=0.99,
                  max_size=1000000, fc1_dims=400, fc2_dims=300,
-                 batch_size=64, chkpt_dir='models/DDPG/', model='sample'):
+                 batch_size=1024, chkpt_dir='models/DDPG/', model='sample'):
         self.gamma = gamma
         self.tau = tau
         self.batch_size = batch_size
@@ -79,13 +79,13 @@ class Agent:
             self.memory.sample_buffer(self.batch_size)
 
         states = T.tensor(states, dtype=T.float).to(self.actor.device)
-        states_ = T.tensor(states_, dtype=T.float).to(self.actor.device)
         actions = T.tensor(actions, dtype=T.float).to(self.actor.device)
         rewards = T.tensor(rewards, dtype=T.float).to(self.actor.device)
         done = T.tensor(done).to(self.actor.device)
+        states_ = T.tensor(states_, dtype=T.float).to(self.actor.device)
 
-        target_actions = self.target_actor.forward(states_)
-        critic_value_ = self.target_critic.forward(states_, target_actions)
+        new_actions = self.target_actor.forward(states_)
+        critic_value_ = self.target_critic.forward(states_, new_actions)
         critic_value = self.critic.forward(states, actions)
 
         critic_value_[done] = 0.0
