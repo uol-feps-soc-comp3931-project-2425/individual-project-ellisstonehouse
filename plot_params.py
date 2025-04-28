@@ -6,15 +6,15 @@ import os
 def plot_opti_param(bulldog_algo, algo, model, lines=None):
 
     if bulldog_algo == ALGO:
-        scores1 = np.load('Opti_param_results/results1/'+algo+'/'+model+'/bulldogs.npy')
-        scores2 = np.load('Opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
-        scores3 = np.load('Opti_param_results/results3/'+algo+'/'+model+'/bulldogs.npy')
+        scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/bulldogs.npy')
+        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
+        scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/bulldogs.npy')
     else:
-        scores1 = np.load('Opti_param_results/results1/'+algo+'/'+model+'/runners.npy')
-        scores2 = np.load('Opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
-        scores3 = np.load('Opti_param_results/results3/'+algo+'/'+model+'/runners.npy')
+        scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/runners.npy')
+        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
+        scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/runners.npy')
         
-    episodes = np.load('Opti_param_results/results1/'+algo+'/'+model+'/eps.npy')
+    episodes = np.load('opti_param_results/results1/'+algo+'/'+model+'/eps.npy')
 
     scores = np.mean([scores1, scores2, scores3], axis=0)
     
@@ -29,14 +29,14 @@ def plot_opti_param(bulldog_algo, algo, model, lines=None):
 
     plt.tight_layout()
 
-    # os.makedirs('plots/'+algo+'/'+model, exist_ok=True)
+    os.makedirs('opti_param_plots/'+algo+'/'+model, exist_ok=True)
 
     if bulldog_algo == ALGO:
-        plt.savefig('plots/'+algo+'/'+model+'.png')
+        plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
         print('Plotted: '+algo+'/'+model)
         print(np.mean(scores))
     else:
-        plt.savefig('plots/'+algo+'/'+model+'.png')
+        plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
         print('Plotted: '+algo+'/'+model)
         print(np.mean(scores))
     

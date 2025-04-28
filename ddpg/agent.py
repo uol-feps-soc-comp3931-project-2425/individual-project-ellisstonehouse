@@ -46,9 +46,9 @@ class Agent:
         self.update_network_parameters(tau=1)
 
     def choose_action(self, observation, evaluate=False):
-        state = T.tensor(observation[np.newaxis, :], dtype=T.float,
+        obs = T.tensor(observation[np.newaxis, :], dtype=T.float,
                          device=self.actor.device)
-        mu = self.actor.forward(state).to(self.actor.device)
+        mu = self.actor.forward(obs).to(self.actor.device)
         noise = T.rand(self.n_actions).to(self.actor.device)
         noise *= T.tensor(1 - int(evaluate))
         mu_prime = mu + noise
@@ -56,8 +56,8 @@ class Agent:
 
         return mu_prime.cpu().detach().numpy()[0]
 
-    def remember(self, state, action, reward, state_, done):
-        self.memory.store_transition(state, action, reward, state_, done)
+    def remember(self, observation, action, reward, observation_, done):
+        self.memory.store_transition(observation, action, reward, observation_, done)
 
     def save_models(self):
         self.actor.save_checkpoint()
@@ -75,18 +75,18 @@ class Agent:
         if self.memory.mem_cntr < self.batch_size:
             return
 
-        states, actions, rewards, states_, done = \
+        observations, actions, rewards, observations_, done = \
             self.memory.sample_buffer(self.batch_size)
 
-        states = T.tensor(states, dtype=T.float).to(self.actor.device)
+        observations = T.tensor(observations, dtype=T.float).to(self.actor.device)
         actions = T.tensor(actions, dtype=T.float).to(self.actor.device)
         rewards = T.tensor(rewards, dtype=T.float).to(self.actor.device)
         done = T.tensor(done).to(self.actor.device)
-        states_ = T.tensor(states_, dtype=T.float).to(self.actor.device)
+        observations_ = T.tensor(observations_, dtype=T.float).to(self.actor.device)
 
-        new_actions = self.target_actor.forward(states_)
-        critic_value_ = self.target_critic.forward(states_, new_actions)
-        critic_value = self.critic.forward(states, actions)
+        new_actions = self.target_actor.forward(observations_)
+        critic_value_ = self.target_critic.forward(observations_, new_actions)
+        critic_value = self.critic.forward(observations, actions)
 
         critic_value_[done] = 0.0
         critic_value_ = critic_value_.view(-1)
@@ -100,7 +100,7 @@ class Agent:
         self.critic.optimizer.step()
 
         self.actor.optimizer.zero_grad()
-        actor_loss = -self.critic.forward(states, self.actor.forward(states))
+        actor_loss = -self.critic.forward(observations, self.actor.forward(observations))
         actor_loss = T.mean(actor_loss)
         actor_loss.backward()
         self.actor.optimizer.step()

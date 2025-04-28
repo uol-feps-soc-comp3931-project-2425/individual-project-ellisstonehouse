@@ -38,9 +38,9 @@ class Agent:
         self.update_network_parameters(tau=1)
 
     def choose_action(self, observation, evaluate=False):
-        state = T.tensor(observation[np.newaxis, :], dtype=T.float,
+        obs = T.tensor(observation[np.newaxis, :], dtype=T.float,
                          device=self.actor.device)
-        actions = self.actor.forward(state)
+        actions = self.actor.forward(obs)
         noise = T.randn(size=(self.n_actions,)).to(self.actor.device)
         noise *= T.tensor(1 - int(evaluate))
         action = T.clamp(actions + noise,
@@ -79,8 +79,8 @@ class Agent:
         if not memory.ready():
             return
 
-        actor_states, states, actions, rewards,\
-            actor_new_states, states_, dones = memory.sample_buffer()
+        observations, states, actions, rewards,\
+            observations_, states_, dones = memory.sample_buffer()
 
         device = self.actor.device
 
@@ -92,17 +92,17 @@ class Agent:
         states_ = T.tensor(np.array(states_), dtype=T.float, device=device)
 
         # individual agent observations
-        actor_states = [T.tensor(actor_states[idx],
+        observations = [T.tensor(observations[idx],
                                  device=device, dtype=T.float)
                         for idx in range(len(agent_list))]
         # individual agent next observations
-        actor_new_states = [T.tensor(actor_new_states[idx],
+        observations_ = [T.tensor(observations_[idx],
                                      device=device, dtype=T.float)
                             for idx in range(len(agent_list))]
 
 
         with T.no_grad():
-            new_actions = T.cat([agent.target_actor(actor_new_states[idx])
+            new_actions = T.cat([agent.target_actor(observations_[idx])
                                  for idx, agent in enumerate(agent_list)],
                                 dim=1)
             critic_value_ = self.target_critic.forward(
@@ -120,8 +120,7 @@ class Agent:
         T.nn.utils.clip_grad_norm_(self.critic.parameters(), 10.0)
         self.critic.optimizer.step()
 
-        actions[self.agent_idx] = self.actor.forward(
-                actor_states[self.agent_idx])
+        actions[self.agent_idx] = self.actor.forward(observations[self.agent_idx])
         actions = T.cat([actions[i] for i in range(len(agent_list))], dim=1)
         actor_loss = -self.critic.forward(states, actions).mean()
         self.actor.optimizer.zero_grad()
