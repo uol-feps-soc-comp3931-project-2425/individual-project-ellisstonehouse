@@ -135,7 +135,6 @@ def run():
         if episode % PRINT_INTERVAL == 0:
             bulldog_avg_score = np.mean(bulldog_score_history[-100:])
             runner_avg_score = np.mean(runner_score_history[-100:])
-            episodes.append(episode)
             print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     np.save('results/evaluate/'+file+'/'+'bulldogs.npy', np.array(bulldog_score_history))
@@ -154,41 +153,35 @@ if __name__ == '__main__':
     DDPG = 1
     RANDOM = 2
 
-    EPISODES = 10
+    EPISODES = 1000
     MAX_STEPS = 500
     PRINT_INTERVAL = 100
 
 
-    bulldog_algo = DDPG
-    runner_algo = DDPG
-
     maddpg_model = 'model_4'
 
 
-    for bulldog_algo in [RANDOM, DDPG, MADDPG]:
-        for runner_algo in [RANDOM, DDPG, MADDPG]:
+    for bulldog_algo in [DDPG, MADDPG]:
+        bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
+
+        for runner_algo in [DDPG, MADDPG]:
                 if bulldog_algo == RANDOM and runner_algo == RANDOM:
                     continue
 
                 for ddpg_model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
 
-                    bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
                     r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
 
-                    file = ''
-
-                    if bulldog_algo == RANDOM:
-                        file += 'RANDOM_vs_'
-                    else:
-                        file += bd_alg_txt+'_'+maddpg_model+'_vs_'
-
-                    if runner_algo == RANDOM:
-                        file += 'RANDOM'
-                    else:
-                        file += r_alg_txt+'_'+ddpg_model
+                    file = bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model
 
                     os.makedirs('results/evaluate/'+file, exist_ok=True)
                     print(file)
 
-
                     run()
+        
+        file = bd_alg_txt+'_'+maddpg_model+'_vs_RANDOM'
+
+        os.makedirs('results/evaluate/'+file, exist_ok=True)
+        print(file)
+
+        run()

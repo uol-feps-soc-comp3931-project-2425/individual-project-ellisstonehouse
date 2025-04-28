@@ -3,39 +3,64 @@ import matplotlib.pyplot as plt
 import os
 
 
-def plot_eval_curve(x, scores, filename, lines=None):
-    maddpg_scores, ddpg_scores = scores
+def plot_eval_curve(bulldog_algo, runner_algo):
 
-    fig, ax = plt.subplots()
 
-    # Compute running averages
-    N = len(maddpg_scores)
-    maddpg_avg = np.empty(N)
-    for t in range(N):
-        maddpg_avg[t] = np.mean(maddpg_scores[max(0, t-100):(t+1)])
+    bulldog_scores_list = []
+    runner_scores_list = []
+    
+    episodes = None
 
-    N = len(ddpg_scores)
-    ddpg_avg = np.empty(N)
-    for t in range(N):
-        ddpg_avg[t] = np.mean(ddpg_scores[max(0, t-100):(t+1)])
+
+    if bulldog_algo == 'RANDOM':
+        for i in range(1, 6):
+            bulldog_scores_list.append(np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_{i}/bulldogs.npy'))
+            runner_scores_list.append(np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_{i}/runners.npy'))
+        episodes = np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_1/episodes.npy')
+    elif runner_algo == 'RANDOM':
+        for i in range(1, 6):
+            bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_RANDOM/bulldogs.npy'))
+            runner_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_RANDOM/runners.npy'))
+        episodes = np.load(f'results/evaluate/{bulldog_algo}_model_1_vs_RANDOM/episodes.npy')
+    else:
+        for i in range(1, 6):
+            for j in range(1, 6):
+                bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/bulldogs.npy'))
+                runner_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/runners.npy'))
+        episodes = np.load(f'results/evaluate/{bulldog_algo}_model_1_vs_{runner_algo}_model_1/episodes.npy')
+
+
+        
+    bulldog_scores = np.mean(bulldog_scores_list, axis=0)
+    runner_scores = np.mean(runner_scores_list, axis=0)
+
+
+
+    # print(episodes)
+
+    
+
+    _, ax = plt.subplots()
 
     # Plot both curves on the same axis
-    ax.plot(x, maddpg_avg, label='MADDPG', color='C0')
-    ax.plot(x, ddpg_avg, label='DDPG', color='C1')
+    ax.plot(episodes, bulldog_scores, label='Bulldog', color='C0', alpha=0.7)
+    ax.plot(episodes, runner_scores, label='Runner', color='C1', alpha=0.7)
 
-    ax.set_xlabel("Training Steps")
-    ax.set_ylabel("Average Score")
+    ax.set_xlabel("Episodes")
+    ax.set_ylabel("Cumulative Reward")
+    ax.set_title(f"{bulldog_algo} vs. {runner_algo} - Average Cumulative Reward per Episode")
     ax.legend()
 
-    if lines is not None:
-        for line in lines:
-            plt.axvline(x=line, color='grey', linestyle='--')
-
     plt.tight_layout()
-    plt.savefig(filename)
+    os.makedirs('plots/evaluate', exist_ok=True)
+
+    plt.savefig(f'plots/evaluate/{bulldog_algo} vs. {runner_algo}.png')
+    print(f'plots/evaluate/{bulldog_algo} vs. {runner_algo}')
     plt.close()
 
-    # plt.savefig(filename)
+
+
+
 
 
 def plot_training_curve(algo, model, lines=None):
@@ -66,21 +91,17 @@ def plot_training_curve(algo, model, lines=None):
 
 def plot_training_curve_all(algo, lines=None):
 
-    bulldog_scores_1 = np.load('results/'+algo+'/model_1/bulldogs.npy')
-    bulldog_scores_2 = np.load('results/'+algo+'/model_2/bulldogs.npy')
-    bulldog_scores_3 = np.load('results/'+algo+'/model_3/bulldogs.npy')
-    bulldog_scores_4 = np.load('results/'+algo+'/model_4/bulldogs.npy')
-    bulldog_scores_5 = np.load('results/'+algo+'/model_5/bulldogs.npy')
-    runner_scores_1 = np.load('results/'+algo+'/model_1/runners.npy')
-    runner_scores_2 = np.load('results/'+algo+'/model_2/runners.npy')
-    runner_scores_3 = np.load('results/'+algo+'/model_3/runners.npy')
-    runner_scores_4 = np.load('results/'+algo+'/model_4/runners.npy')
-    runner_scores_5 = np.load('results/'+algo+'/model_5/runners.npy')
+    bulldog_scores_list = []
+    runner_scores_list = []
 
+    for i in range(1, 6):  # Loop over models 1 to 5
+        bulldog_scores_list.append(np.load(f'results/{algo}/model_{i}/bulldogs.npy'))
+        runner_scores_list.append(np.load(f'results/{algo}/model_{i}/runners.npy'))
+
+    bulldog_scores = np.mean(bulldog_scores_list, axis=0)
+    runner_scores = np.mean(runner_scores_list, axis=0)
+    
     episodes = np.load('results/'+algo+'/model_1/eps.npy')
-
-    bulldog_scores = np.mean([bulldog_scores_1, bulldog_scores_2, bulldog_scores_3, bulldog_scores_4, bulldog_scores_5], axis=0)
-    runner_scores = np.mean([runner_scores_1, runner_scores_2, runner_scores_3, runner_scores_4, runner_scores_5], axis=0)
 
     _, ax = plt.subplots()
 
@@ -103,14 +124,24 @@ def plot_training_curve_all(algo, lines=None):
 
 if __name__ == '__main__':
 
-    for algo in ['DDPG', 'MADDPG']:
-        for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
-            plot_training_curve(algo, model)
+    # for algo in ['DDPG', 'MADDPG']:
+    #     for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
+    #         plot_training_curve(algo, model)
 
-
-            # plot_eval_curve(scores=(bulldog_scores, runner_scores), 
-            #                 episodes=episodes,
-            #                 filename='plots/'+algo+'.png')
-        plot_training_curve_all(algo)
+    #     plot_training_curve_all(algo)
     
+
+    for bulldog_algo in ['DDPG', 'MADDPG']:
+        for runner_algo in ['DDPG', 'MADDPG']:
+                if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
+                    continue
+                
+                plot_eval_curve(bulldog_algo, runner_algo)
+
+    for bulldog_algo in ['DDPG', 'MADDPG']:
+        plot_eval_curve(bulldog_algo, 'RANDOM')
+    
+    for runner_algo in ['DDPG', 'MADDPG']:
+        plot_eval_curve('RANDOM', runner_algo)
+
 

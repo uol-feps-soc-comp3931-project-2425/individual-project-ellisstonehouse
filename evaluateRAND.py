@@ -159,31 +159,22 @@ if __name__ == '__main__':
 
 
 
-    maddpg_model = 'model_1'
+    bulldog_algo = RANDOM
 
 
-    for bulldog_algo in [DDPG, MADDPG]:
-        bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
+    for runner_algo in [DDPG, MADDPG]:
+            
+        r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
 
-        for runner_algo in [DDPG, MADDPG]:
-                if bulldog_algo == RANDOM and runner_algo == RANDOM:
-                    continue
+        for ddpg_model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
+            maddpg_model = ddpg_model
 
-                for ddpg_model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
 
-                    r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
+            file = 'RANDOM_vs_'+r_alg_txt+'_'+ddpg_model
 
-                    file = bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model
+            os.makedirs('results/evaluate/'+file, exist_ok=True)
+            print(file)
 
-                    os.makedirs('results/evaluate/'+file, exist_ok=True)
-                    print(file)
-
-                    run()
-        
-        file = bd_alg_txt+'_'+maddpg_model+'_vs_RANDOM'
-
-        os.makedirs('results/evaluate/'+file, exist_ok=True)
-        print(file)
-
-        run()
-        
+            run()
+    
+    
