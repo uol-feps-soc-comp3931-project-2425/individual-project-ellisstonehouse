@@ -51,7 +51,7 @@ def run():
             actor_dims.append(env.observation_space[i])
             n_actions.append(env.action_space[i])
 
-        critic_dims = sum(actor_dims) + sum(n_actions)
+        critic_dims = env.observation_space[i] + sum(n_actions)
 
 
         for agent_idx in range(env.n_agents):
