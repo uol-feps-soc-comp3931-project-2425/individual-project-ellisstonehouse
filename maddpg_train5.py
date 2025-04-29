@@ -37,7 +37,6 @@ def run():
 
     total_steps = 0
     scores_history = []
-    best_agent_scores = np.zeros(env.n_agents)
     bulldog_score_history = []
     runner_score_history = []
     episodes = []
@@ -48,7 +47,9 @@ def run():
     for i in range(env.n_agents):
         actor_dims.append(env.observation_space[i])
         n_actions.append(env.action_space[i])
-    critic_dims = sum(actor_dims) + sum(n_actions)
+    # critic_dims = sum(actor_dims) + sum(n_actions)
+    critic_dims = env.observation_space[i] + sum(n_actions)
+    
 
     agents = []
 
@@ -59,7 +60,9 @@ def run():
                             fc1=64, fc2=64, model=model))
     
 
-    critic_dims = sum(actor_dims)
+    # critic_dims = sum(actor_dims)
+    critic_dims = env.observation_space[i]
+
     memory = MultiAgentReplayBuffer(1_000_000, critic_dims, actor_dims,
                                     n_actions, env.n_agents, batch_size=1024)
     
@@ -89,8 +92,13 @@ def run():
 
             roles, observation_, rewards, done = env.step(actions)
 
-            state = obs_list_to_state_vector(observation)
-            state_ = obs_list_to_state_vector(observation_)
+            # state = obs_list_to_state_vector(observation)
+            # state_ = obs_list_to_state_vector(observation_)
+
+            # set full state to single agent observation, since each agent views full state,
+            # they are all the same
+            state = observation[0]
+            state_ = observation_[0]
 
             # store experience
             memory.store_transition(observation, state, actions, rewards,

@@ -34,11 +34,8 @@ def plot_eval_curve(bulldog_algo, runner_algo):
     bulldog_scores = np.mean(bulldog_scores_list, axis=0)
     runner_scores = np.mean(runner_scores_list, axis=0)
 
-
-
     # print(episodes)
 
-    
 
     _, ax = plt.subplots()
 
@@ -57,8 +54,6 @@ def plot_eval_curve(bulldog_algo, runner_algo):
     plt.savefig(f'plots/evaluate/{bulldog_algo} vs. {runner_algo}.png')
     print(f'plots/evaluate/{bulldog_algo} vs. {runner_algo}')
     plt.close()
-
-
 
 
 

@@ -48,7 +48,7 @@ def run():
                       n_actions=n_actions, model=model))
         
 
-    for episode in range(EPISODES):
+    for episode in range(EPISODES+1):
         roles = [BULLDOG]*env.init_bulldogs + [RUNNER]*env.init_runners
         observation = env.reset()
         done = [False]*env.n_agents
