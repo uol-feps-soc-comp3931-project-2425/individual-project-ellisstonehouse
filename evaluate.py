@@ -13,7 +13,7 @@ MADDPG = 0
 DDPG = 1
 RANDOM = 2
 
-EPISODES = 10_000
+EPISODES = 1000
 MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
@@ -25,13 +25,27 @@ TAU = 1
 bulldog_algo = DDPG
 runner_algo = MADDPG
 
-maddpg_model = 'model_2'
-ddpg_model = 'model_1'
+bulldog_model = 'model_2'
+runner_model = 'model_1'
 
-bd_alg_txt = 'RANDOM' if bulldog_algo == RANDOM else 'DDPG' if bulldog_algo == DDPG else 'MADDPG'
-r_alg_txt = 'RANDOM' if runner_algo == RANDOM else 'DDPG' if runner_algo == DDPG else 'MADDPG'
 
-# os.makedirs('results/evaluate/'+bd_alg_txt+'_'+maddpg_model+'_vs_'+r_alg_txt+'_'+ddpg_model, exist_ok=True)
+file = ''
+
+if bulldog_algo == RANDOM:
+    file += 'RANDOM_vs_'
+elif bulldog_algo == DDPG:
+    file += 'DDPG_'+bulldog_model+'_vs_'
+else:
+    file += 'MADDPG_'+bulldog_model+'_vs_'
+
+if runner_algo == RANDOM:
+    file += 'RANDOM'
+elif runner_algo == DDPG:
+    file += 'DDPG_'+runner_model
+else:
+    file += 'MADDPG_'+runner_model
+
+# os.makedirs('results/evaluate/'+file, exist_ok=True)
 
 
 def run():
@@ -43,38 +57,70 @@ def run():
     runner_score_history = []
     episodes = []
 
-    maddpg_agents = []
-    if bulldog_algo == MADDPG or runner_algo == MADDPG:
+    bulldog_agents = []
+    if bulldog_algo == MADDPG:
         actor_dims = []
         n_actions = []
         for i in range(env.n_agents):
             actor_dims.append(env.observation_space[i])
             n_actions.append(env.action_space[i])
 
-        critic_dims = sum(actor_dims) + sum(n_actions)
+        critic_dims = actor_dims[0] + sum(n_actions)
 
 
         for agent_idx in range(env.n_agents):
-            maddpg_agents.append(MADDPG_Agent(actor_dims[agent_idx], critic_dims,
+            bulldog_agents.append(MADDPG_Agent(actor_dims[agent_idx], critic_dims,
                                 n_actions[agent_idx], env.n_agents, agent_idx,
                                 alpha=ALPHA, beta=BETA, gamma=GAMMA, tau=TAU, 
-                                fc1=64, fc2=64, model=maddpg_model))
+                                fc1=64, fc2=64, model=bulldog_model))
 
-        for agent in maddpg_agents:
+        for agent in bulldog_agents:
             agent.load_models()
 
-    ddpg_agents = []
-    if bulldog_algo == DDPG or runner_algo == DDPG:
+    elif bulldog_algo == DDPG:
         for agent_idx in range(env.n_agents):
             input_dims = env.observation_space[agent_idx]
             n_actions = env.action_space[agent_idx]
 
-            ddpg_agents.append(DDPG_Agent(agent_idx, alpha=ALPHA, beta=BETA,
+            bulldog_agents.append(DDPG_Agent(agent_idx, alpha=ALPHA, beta=BETA,
                         input_dims=input_dims, tau=TAU, gamma=GAMMA,
                         batch_size=1024, fc1_dims=64, fc2_dims=64,
-                        n_actions=n_actions, model=ddpg_model))
+                        n_actions=n_actions, model=bulldog_model))
 
-        for agent in ddpg_agents:
+        for agent in bulldog_agents:
+            agent.load_models()
+
+
+    runner_agents = []
+    if runner_algo == MADDPG:
+        actor_dims = []
+        n_actions = []
+        for i in range(env.n_agents):
+            actor_dims.append(env.observation_space[i])
+            n_actions.append(env.action_space[i])
+
+        critic_dims = actor_dims[0] + sum(n_actions)
+
+        for agent_idx in range(env.n_agents):
+            runner_agents.append(MADDPG_Agent(actor_dims[agent_idx], critic_dims,
+                                n_actions[agent_idx], env.n_agents, agent_idx,
+                                alpha=ALPHA, beta=BETA, gamma=GAMMA, tau=TAU, 
+                                fc1=64, fc2=64, model=runner_model))
+
+        for agent in runner_agents:
+            agent.load_models()
+
+    elif runner_algo == DDPG:
+        for agent_idx in range(env.n_agents):
+            input_dims = env.observation_space[agent_idx]
+            n_actions = env.action_space[agent_idx]
+
+            runner_agents.append(DDPG_Agent(agent_idx, alpha=ALPHA, beta=BETA,
+                        input_dims=input_dims, tau=TAU, gamma=GAMMA,
+                        batch_size=1024, fc1_dims=64, fc2_dims=64,
+                        n_actions=n_actions, model=runner_model))
+
+        for agent in runner_agents:
             agent.load_models()
 
 
@@ -94,18 +140,14 @@ def run():
             # action mask depending on chosen algorithm
             for agent_idx, role in enumerate(roles):
                 if role == BULLDOG:
-                    if bulldog_algo == MADDPG:
-                        actions[agent_idx] = maddpg_agents[agent_idx].choose_action(observation[agent_idx])
-                    elif bulldog_algo == DDPG:
-                        actions[agent_idx] = ddpg_agents[agent_idx].choose_action(observation[agent_idx])
+                    if bulldog_algo == MADDPG or bulldog_algo == DDPG:
+                        actions[agent_idx] = bulldog_agents[agent_idx].choose_action(observation[agent_idx])
                     else: # RANDOM
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
                         
                 else: #RUNNER
-                    if runner_algo == MADDPG:
-                        actions[agent_idx] = maddpg_agents[agent_idx].choose_action(observation[agent_idx])
-                    elif runner_algo == DDPG:
-                        actions[agent_idx] = ddpg_agents[agent_idx].choose_action(observation[agent_idx])
+                    if bulldog_algo == MADDPG or bulldog_algo == DDPG:
+                        actions[agent_idx] = bulldog_agents[agent_idx].choose_action(observation[agent_idx])
                     else: # RANDOM
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
 

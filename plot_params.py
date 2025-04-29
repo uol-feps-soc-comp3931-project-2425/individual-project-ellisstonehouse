@@ -48,12 +48,8 @@ if __name__ == '__main__':
     ALGO = 0
     RANDOM = 1
 
-
     TAU = 0.01
 
-    # # plot_training_curve(algo, model)
-    # for algorithm in ['DDPG', 'MADDPG']:
-    #     for bulldog_algo in [ALGO, RANDOM]:
     for algorithm in ['DDPG']:
         for bulldog_algo in [ALGO, RANDOM]:
             runner_algo = not(bulldog_algo)
