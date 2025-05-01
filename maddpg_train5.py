@@ -9,7 +9,7 @@ RUNNER = 0
 MADDPG = 0
 RANDOM = 1
 
-EPISODES = 100
+EPISODES = 10000
 MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
@@ -90,7 +90,7 @@ def run():
                 elif roles[idx] == RUNNER and runner_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
 
-            roles, observation_, rewards, done = env.step(actions)
+            roles_, observation_, rewards, done = env.step(actions)
 
             # state = obs_list_to_state_vector(observation)
             # state_ = obs_list_to_state_vector(observation_)
@@ -122,7 +122,9 @@ def run():
                     bulldog_score += rewards[idx]
                 else: # Runner
                     runner_score += rewards[idx]
-            
+
+            roles = roles_.copy()
+
             total_steps += 1
             episode_step += 1
         

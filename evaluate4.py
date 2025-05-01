@@ -132,8 +132,8 @@ def run():
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
                         
                 else: #RUNNER
-                    if bulldog_algo == MADDPG or bulldog_algo == DDPG:
-                        actions[agent_idx] = bulldog_agents[agent_idx].choose_action(observation[agent_idx])
+                    if runner_algo == MADDPG or runner_algo == DDPG:
+                        actions[agent_idx] = runner_agents[agent_idx].choose_action(observation[agent_idx])
                     else: # RANDOM
                         actions[agent_idx] = np.random.uniform(-1.0, 1.0, size=2)
 

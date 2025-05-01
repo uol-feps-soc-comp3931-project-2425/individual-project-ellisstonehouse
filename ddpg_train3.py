@@ -70,7 +70,7 @@ def run():
                 elif roles[idx] == RUNNER and runner_algo == RANDOM:
                     actions[idx] = np.random.uniform(-1.0, 1.0, size=2)
             
-            roles, observation_, rewards, done = env.step(actions)
+            roles_, observation_, rewards, done = env.step(actions)
 
             # store experience
             for idx, agent in enumerate(agents):
@@ -95,6 +95,9 @@ def run():
                     bulldog_score += rewards[idx]
                 else: # Runner
                     runner_score += rewards[idx]
+
+
+            roles = roles_.copy()
 
             total_steps += 1
             episode_step += 1
