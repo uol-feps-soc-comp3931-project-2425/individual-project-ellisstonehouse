@@ -30,9 +30,15 @@ def plot_eval_curve(bulldog_algo, runner_algo):
         episodes = np.load(f'results/evaluate/{bulldog_algo}_model_1_vs_{runner_algo}_model_1/episodes.npy')
 
 
+    # for i, arr in enumerate(bulldog_scores_list):
+    #     count_positive = np.sum(arr > 0)
+    #     print(count_positive)
         
     bulldog_scores = np.mean(bulldog_scores_list, axis=0)
     runner_scores = np.mean(runner_scores_list, axis=0)
+
+    print(np.sum(bulldog_scores > 0))
+    print(np.sum(runner_scores > 0))
 
     # print(episodes)
 
@@ -117,25 +123,155 @@ def plot_training_curve_all(algo, lines=None):
     plt.close()
 
 
-if __name__ == '__main__':
+def plot_eval_wins():
 
-    for algo in ['DDPG', 'MADDPG']:
-        for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
-            plot_training_curve(algo, model)
-        plot_training_curve_all(algo)
-    
+    bd_algo = []
+    r_algo = []
+    bulldog_wins = []
+
 
     for bulldog_algo in ['DDPG', 'MADDPG']:
         for runner_algo in ['DDPG', 'MADDPG']:
-                if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
-                    continue
-                
-                plot_eval_curve(bulldog_algo, runner_algo)
+            if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
+                continue
+
+            bulldog_scores_list = []
+
+            if bulldog_algo == 'RANDOM':
+                for i in range(1, 6):
+                    bulldog_scores_list.append(np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_{i}/bulldogs.npy'))
+            elif runner_algo == 'RANDOM':
+                for i in range(1, 6):
+                    bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_RANDOM/bulldogs.npy'))
+            else:
+                for i in range(1, 6):
+                    for j in range(1, 6):
+                        bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/bulldogs.npy'))
+
+
+            bulldog_scores = np.mean(bulldog_scores_list, axis=0)
+            
+            bd_algo.append(bulldog_algo)
+            r_algo.append(runner_algo)
+            bulldog_wins.append(np.sum(bulldog_scores > 0))
 
     for bulldog_algo in ['DDPG', 'MADDPG']:
-        plot_eval_curve(bulldog_algo, 'RANDOM')
+        runner_algo = 'RANDOM'
+
+        bulldog_scores_list = []
+
+        if bulldog_algo == 'RANDOM':
+            for i in range(1, 6):
+                bulldog_scores_list.append(np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_{i}/bulldogs.npy'))
+        elif runner_algo == 'RANDOM':
+            for i in range(1, 6):
+                bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_RANDOM/bulldogs.npy'))
+        else:
+            for i in range(1, 6):
+                for j in range(1, 6):
+                    bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/bulldogs.npy'))
+
+
+        bulldog_scores = np.mean(bulldog_scores_list, axis=0)
+
+        bd_algo.append(bulldog_algo)
+        r_algo.append(runner_algo)
+        bulldog_wins.append(np.sum(bulldog_scores > 0))
+
     
     for runner_algo in ['DDPG', 'MADDPG']:
-        plot_eval_curve('RANDOM', runner_algo)
+        bulldog_algo = 'RANDOM'
+
+        bulldog_scores_list = []
+
+        if bulldog_algo == 'RANDOM':
+            for i in range(1, 6):
+                bulldog_scores_list.append(np.load(f'results/evaluate/RANDOM_vs_{runner_algo}_model_{i}/bulldogs.npy'))
+        elif runner_algo == 'RANDOM':
+            for i in range(1, 6):
+                bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_RANDOM/bulldogs.npy'))
+        else:
+            for i in range(1, 6):
+                for j in range(1, 6):
+                    bulldog_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/bulldogs.npy'))
+
+
+        bulldog_scores = np.mean(bulldog_scores_list, axis=0)
+
+        bd_algo.append(bulldog_algo)
+        r_algo.append(runner_algo)
+        bulldog_wins.append(np.sum(bulldog_scores > 0))
+
+
+    total_games = 1000
+
+    bulldog_wins = bulldog_wins[::-1]
+    runner_wins = [total_games - win for win in bulldog_wins]
+   
+    bd_algo = bd_algo[::-1]
+    r_algo = r_algo[::-1]
+
+    y = np.arange(len(bd_algo))
+
+    _, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot the stacked bars
+    ax.barh(y, bulldog_wins, label='Bulldog Wins', alpha=0.7)
+    ax.barh(y, runner_wins, left=bulldog_wins, label='Runner Wins', alpha=0.7)
+
+    # Remove default y-tick labels
+    ax.set_yticks(y)
+    ax.set_yticklabels([''] * len(bd_algo))
+
+    # Add custom labels for Bulldog and Runner algos
+    for i in range(len(bd_algo)):
+        
+        # Bulldog label on the left of the blue bar
+        ax.text(5, y[i], bd_algo[i], va='center', ha='left', color='black', fontsize=9, weight='bold')
+        
+        # Runner label on the right of the orange bar
+        ax.text(bulldog_wins[i] + runner_wins[i] - 5, y[i], r_algo[i], va='center', ha='right', color='black', fontsize=9, weight='bold')
+
+    # Labels and formatting
+    ax.set_xlabel('Number of Wins')
+    ax.set_title('Win Distribution per Match up')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+
+
+    plt.tight_layout()
+    # plt.show()
+
+    plt.savefig('plots/bar.png')
+    print('Plotted: bar.png')
+    plt.close()
+
+
+    
+
+
+
+if __name__ == '__main__':
+
+    # for algo in ['DDPG', 'MADDPG']:
+    #     for model in ['model_1', 'model_2', 'model_3', 'model_4', 'model_5']:
+    #         plot_training_curve(algo, model)
+    #     plot_training_curve_all(algo)
+    
+
+    # for bulldog_algo in ['DDPG', 'MADDPG']:
+    #     for runner_algo in ['DDPG', 'MADDPG']:
+    #             if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
+    #                 continue
+                
+    #             plot_eval_curve(bulldog_algo, runner_algo)
+
+    # for bulldog_algo in ['DDPG', 'MADDPG']:
+    #     plot_eval_curve(bulldog_algo, 'RANDOM')
+    
+    # for runner_algo in ['DDPG', 'MADDPG']:
+    #     plot_eval_curve('RANDOM', runner_algo)
+
+
+    plot_eval_wins()
 
 

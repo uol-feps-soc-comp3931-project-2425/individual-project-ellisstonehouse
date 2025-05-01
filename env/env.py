@@ -114,8 +114,8 @@ class BritishBulldogEnv():
                             role_changes.append(runner_id)
 
                         else:
-                            rewards[bulldog_id] += (5 - distance) / 10
-                            rewards[runner_id] += (distance - 5) / 10
+                            rewards[bulldog_id] += (5 - distance) / 50
+                            rewards[runner_id] += (distance - 5) / 50
 
         for runner_id in role_changes:
             p.changeVisualShape(self.agent_ids[runner_id], -1, rgbaColor=[1., 0.5, 0.5, 1])
