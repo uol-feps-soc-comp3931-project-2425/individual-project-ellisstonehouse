@@ -258,18 +258,18 @@ if __name__ == '__main__':
         plot_training_curve_all(algo)
     
 
-    # for bulldog_algo in ['DDPG', 'MADDPG']:
-    #     for runner_algo in ['DDPG', 'MADDPG']:
-    #             if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
-    #                 continue
+    for bulldog_algo in ['DDPG', 'MADDPG']:
+        for runner_algo in ['DDPG', 'MADDPG']:
+                if bulldog_algo == 'RANDOM' and runner_algo == 'RANDOM':
+                    continue
                 
-    #             plot_eval_curve(bulldog_algo, runner_algo)
+                plot_eval_curve(bulldog_algo, runner_algo)
 
-    # for bulldog_algo in ['DDPG', 'MADDPG']:
-    #     plot_eval_curve(bulldog_algo, 'RANDOM')
+    for bulldog_algo in ['DDPG', 'MADDPG']:
+        plot_eval_curve(bulldog_algo, 'RANDOM')
     
-    # for runner_algo in ['DDPG', 'MADDPG']:
-    #     plot_eval_curve('RANDOM', runner_algo)
+    for runner_algo in ['DDPG', 'MADDPG']:
+        plot_eval_curve('RANDOM', runner_algo)
 
 
     plot_eval_wins()
