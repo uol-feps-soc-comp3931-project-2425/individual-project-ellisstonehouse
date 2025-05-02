@@ -14,8 +14,8 @@ MAX_STEPS = 500
 PRINT_INTERVAL = 100
 
 ALPHA = 1e-3
-BETA = 1e-3
-GAMMA = 0.95
+BETA = 1e-4
+GAMMA = 0.99
 TAU = 0.01
 
 bulldog_algo = MADDPG

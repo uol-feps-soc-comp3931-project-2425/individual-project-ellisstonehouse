@@ -172,12 +172,12 @@ if __name__ == '__main__':
     GAMMA = 0.95
     TAU = 0.01
 
-    for bulldog_algo in [MADDPG, RANDOM]:
+    for bulldog_algo in [RANDOM]:
         runner_algo = not(bulldog_algo)
 
         model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)
 
-        for folder in ['results1/', 'results2/', 'results3/']:
+        for folder in ['results3/']:
 
             file = folder + 'MADDPG/' + model
 

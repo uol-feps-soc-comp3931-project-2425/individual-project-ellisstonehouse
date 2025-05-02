@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
         model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)
 
-        for folder in ['results1/', 'results2/', 'results3/']:
+        for folder in ['results3/']:
 
             file = folder + 'MADDPG/' + model
 

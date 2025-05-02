@@ -15,7 +15,7 @@ PRINT_INTERVAL = 100
 
 ALPHA = 1e-3
 BETA = 1e-3
-GAMMA = 0.99
+GAMMA = 0.95
 TAU = 0.01
 
 bulldog_algo = DDPG
