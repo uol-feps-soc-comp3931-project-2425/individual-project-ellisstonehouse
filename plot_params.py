@@ -7,16 +7,16 @@ def plot_opti_param(bulldog_algo, algo, model, lines=None):
 
     if bulldog_algo == ALGO:
         scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/bulldogs.npy')
-        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
+        scores = np.load('opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
         scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/bulldogs.npy')
     else:
         scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/runners.npy')
-        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
+        scores = np.load('opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
         scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/runners.npy')
         
     episodes = np.load('opti_param_results/results1/'+algo+'/'+model+'/eps.npy')
 
-    scores = np.mean([scores1, scores2, scores3], axis=0)
+    # scores = np.mean([scores1, scores2, scores3], axis=0)
     
     fig, ax = plt.subplots()
 
@@ -29,16 +29,18 @@ def plot_opti_param(bulldog_algo, algo, model, lines=None):
 
     plt.tight_layout()
 
-    os.makedirs('opti_param_plots/'+algo+'/'+model, exist_ok=True)
+    # os.makedirs('opti_param_plots/'+algo+'/'+model, exist_ok=True)
 
-    if bulldog_algo == ALGO:
-        plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
-        print('Plotted: '+algo+'/'+model)
-        print(np.mean(scores))
-    else:
-        plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
-        print('Plotted: '+algo+'/'+model)
-        print(np.mean(scores))
+    
+    plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
+    print('Plotted: '+algo+'/'+model)
+    #print('1', np.std(scores1))
+    #print('2', np.std(scores2))
+    #print('3', np.std(scores3))
+    #print('avg', np.mean([np.std(scores1), np.std(scores2), np.std(scores3)]))
+
+
+    
     
     plt.close()
 
@@ -50,7 +52,7 @@ if __name__ == '__main__':
 
     TAU = 0.01
 
-    for algorithm in ['DDPG']:
+    for algorithm in ['MADDPG']:
         for bulldog_algo in [ALGO, RANDOM]:
             runner_algo = not(bulldog_algo)
             for GAMMA in [0.95, 0.99]:
@@ -59,4 +61,5 @@ if __name__ == '__main__':
                         model = 'BD_'*(not bulldog_algo)+'R_'*(not runner_algo)+'a='+str(ALPHA)+'_b='+str(BETA)+'_g='+str(GAMMA)+'_t='+str(TAU)
 
                         plot_opti_param(bulldog_algo, algorithm, model)
+
 
