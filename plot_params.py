@@ -7,16 +7,16 @@ def plot_opti_param(bulldog_algo, algo, model, lines=None):
 
     if bulldog_algo == ALGO:
         scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/bulldogs.npy')
-        scores = np.load('opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
+        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/bulldogs.npy')
         scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/bulldogs.npy')
     else:
         scores1 = np.load('opti_param_results/results1/'+algo+'/'+model+'/runners.npy')
-        scores = np.load('opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
+        scores2 = np.load('opti_param_results/results2/'+algo+'/'+model+'/runners.npy')
         scores3 = np.load('opti_param_results/results3/'+algo+'/'+model+'/runners.npy')
         
     episodes = np.load('opti_param_results/results1/'+algo+'/'+model+'/eps.npy')
 
-    # scores = np.mean([scores1, scores2, scores3], axis=0)
+    scores = np.mean([scores1, scores2, scores3], axis=0)
     
     fig, ax = plt.subplots()
 
@@ -34,10 +34,6 @@ def plot_opti_param(bulldog_algo, algo, model, lines=None):
     
     plt.savefig('opti_param_plots/'+algo+'/'+model+'.png')
     print('Plotted: '+algo+'/'+model)
-    #print('1', np.std(scores1))
-    #print('2', np.std(scores2))
-    #print('3', np.std(scores3))
-    #print('avg', np.mean([np.std(scores1), np.std(scores2), np.std(scores3)]))
 
 
     

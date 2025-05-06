@@ -25,7 +25,7 @@ TAU = 1
 bulldog_algo = MADDPG
 runner_algo = DDPG
 
-bulldog_model = 'model_2'
+bulldog_model = 'model_1'
 runner_model = 'model_1'
 
 
@@ -175,11 +175,9 @@ def run():
         episodes.append(episode)
 
         if episode % PRINT_INTERVAL == 0:
-            bulldog_avg_score = np.mean(bulldog_score_history[-100:])
-            runner_avg_score = np.mean(runner_score_history[-100:])
-            print(f'Episode {episode}, last 100 avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
-
-        print(f'Episode {episode}, bd score {bulldog_score:.1f}, r score {runner_score:.1f}')
+            bulldog_avg_score = np.mean(bulldog_score_history[-PRINT_INTERVAL:])
+            runner_avg_score = np.mean(runner_score_history[-PRINT_INTERVAL:])
+            print(f'Episode {episode}, last {PRINT_INTERVAL} avg, bd score {bulldog_avg_score:.1f}, r score {runner_avg_score:.1f}')
 
     env.close()
 

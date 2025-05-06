@@ -29,18 +29,10 @@ def plot_eval_curve(bulldog_algo, runner_algo):
                 runner_scores_list.append(np.load(f'results/evaluate/{bulldog_algo}_model_{i}_vs_{runner_algo}_model_{j}/runners.npy'))
         episodes = np.load(f'results/evaluate/{bulldog_algo}_model_1_vs_{runner_algo}_model_1/episodes.npy')
 
-
-    # for i, arr in enumerate(bulldog_scores_list):
-    #     count_positive = np.sum(arr > 0)
-    #     print(count_positive)
         
     bulldog_scores = np.mean(bulldog_scores_list, axis=0)
     runner_scores = np.mean(runner_scores_list, axis=0)
 
-    print(np.sum(bulldog_scores > 0))
-    print(np.sum(runner_scores > 0))
-
-    # print(episodes)
 
 
     _, ax = plt.subplots()
@@ -79,7 +71,7 @@ def plot_training_curve(algo, model, lines=None):
 
     ax.set_xlabel("Episodes")
     ax.set_ylabel("Cumulative Reward")
-    ax.set_title(f"{algo} - {model} Cumulative Reward per Episode")
+    ax.set_title(f"{algo} - {model} Cumulative Reward per Episode, during Training")
     ax.legend()
 
     plt.tight_layout()
@@ -112,7 +104,7 @@ def plot_training_curve_all(algo, lines=None):
 
     ax.set_xlabel("Episodes")
     ax.set_ylabel("Cumulative Reward")
-    ax.set_title(f"{algo} - Average Cumulative Reward per Episode")
+    ax.set_title(f"{algo} - Average Cumulative Reward per Episode, during Training")
     ax.legend()
 
     plt.tight_layout()
@@ -215,24 +207,18 @@ def plot_eval_wins():
 
     _, ax = plt.subplots(figsize=(10, 6))
 
-    # Plot the stacked bars
     ax.barh(y, bulldog_wins, label='Bulldog Wins', alpha=0.7)
     ax.barh(y, runner_wins, left=bulldog_wins, label='Runner Wins', alpha=0.7)
 
-    # Remove default y-tick labels
     ax.set_yticks(y)
     ax.set_yticklabels([''] * len(bd_algo))
 
-    # Add custom labels for Bulldog and Runner algos
     for i in range(len(bd_algo)):
         
-        # Bulldog label on the left of the blue bar
         ax.text(5, y[i], bd_algo[i], va='center', ha='left', color='black', fontsize=9, weight='bold')
         
-        # Runner label on the right of the orange bar
         ax.text(bulldog_wins[i] + runner_wins[i] - 5, y[i], r_algo[i], va='center', ha='right', color='black', fontsize=9, weight='bold')
 
-    # Labels and formatting
     ax.set_xlabel('Number of Wins')
     ax.set_title('Win Distribution per Match up')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
